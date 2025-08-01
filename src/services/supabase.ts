@@ -1,0 +1,155 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Database types for Supabase
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string
+          username: string | null
+          display_name: string | null
+          bio: string | null
+          profile_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          username?: string | null
+          display_name?: string | null
+          bio?: string | null
+          profile_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          username?: string | null
+          display_name?: string | null
+          bio?: string | null
+          profile_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      sessions: {
+        Row: {
+          id: string
+          user_id: string
+          start_time: string
+          end_time: string | null
+          duration: number
+          type: 'pomodoro' | 'short-break' | 'long-break'
+          tags: string[]
+          completed: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          start_time: string
+          end_time?: string | null
+          duration: number
+          type: 'pomodoro' | 'short-break' | 'long-break'
+          tags?: string[]
+          completed?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          start_time?: string
+          end_time?: string | null
+          duration?: number
+          type?: 'pomodoro' | 'short-break' | 'long-break'
+          tags?: string[]
+          completed?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          pomodoro_length: number
+          short_break_length: number
+          long_break_length: number
+          sessions_until_long_break: number
+          auto_start_breaks: boolean
+          auto_start_pomodoros: boolean
+          sound_enabled: boolean
+          notifications_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          pomodoro_length?: number
+          short_break_length?: number
+          long_break_length?: number
+          sessions_until_long_break?: number
+          auto_start_breaks?: boolean
+          auto_start_pomodoros?: boolean
+          sound_enabled?: boolean
+          notifications_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          pomodoro_length?: number
+          short_break_length?: number
+          long_break_length?: number
+          sessions_until_long_break?: number
+          auto_start_breaks?: boolean
+          auto_start_pomodoros?: boolean
+          sound_enabled?: boolean
+          notifications_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tags: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          color: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          color?: string
+          created_at?: string
+        }
+      }
+    }
+  }
+}
