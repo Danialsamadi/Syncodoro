@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { dbHelpers } from '../services/dbHelpers'
 import { PomodoroSession } from '../services/database'
 import { formatDuration, getDateRange, groupSessionsByDate } from '../utils/helpers'
-import { Calendar, Clock, Target, TrendingUp } from 'lucide-react'
+import { Calendar, Clock, Target, TrendingUp, Download } from 'lucide-react'
+import ExportModal from '../components/ExportModal'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -17,6 +18,7 @@ export default function DashboardPage() {
   })
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week')
   const [loading, setLoading] = useState(true)
+  const [showExportModal, setShowExportModal] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
@@ -44,7 +46,6 @@ export default function DashboardPage() {
   }
 
   const completedSessions = sessions.filter(s => s.completed && s.type === 'pomodoro')
-  const totalFocusTime = completedSessions.reduce((sum, session) => sum + session.duration, 0)
   const groupedSessions = groupSessionsByDate(completedSessions)
 
   if (loading) {
@@ -60,20 +61,30 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         
-        <div className="flex space-x-2">
-          {(['week', 'month', 'year'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                period === p
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          ))}
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="btn-outline flex items-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export Data</span>
+          </button>
+          
+          <div className="flex space-x-2">
+            {(['week', 'month', 'year'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  period === p
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -208,6 +219,11 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+      
+      <ExportModal 
+        isOpen={showExportModal} 
+        onClose={() => setShowExportModal(false)} 
+      />
     </div>
   )
 }
