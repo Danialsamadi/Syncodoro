@@ -7,50 +7,6 @@ import { Link } from 'react-router-dom'
 export default function HomePage() {
   const { user } = useAuth()
 
-  if (!user) {
-    return (
-      <div className="max-w-4xl mx-auto text-center">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Syncodoro
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            A powerful Pomodoro timer that works offline and syncs across all your devices
-          </p>
-          <Link to="/login" className="btn-primary text-lg px-8 py-3">
-            Get Started
-          </Link>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 mt-16">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🍅</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Focus Sessions</h3>
-            <p className="text-gray-600">Customizable Pomodoro timer with break management</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📊</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Analytics</h3>
-            <p className="text-gray-600">Track your productivity with detailed insights</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">☁️</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Sync & Export</h3>
-            <p className="text-gray-600">Works offline and syncs across devices</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
@@ -66,6 +22,17 @@ export default function HomePage() {
         <Timer />
         <TagSelector />
         <SessionNotes />
+        
+        {!user && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <p className="text-blue-800 text-sm">
+              🚀 <strong>Offline Mode:</strong> Your sessions are saved locally and will sync when you sign in.
+              <Link to="/login" className="ml-2 text-blue-600 hover:text-blue-700 underline">
+                Sign in to unlock all features
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

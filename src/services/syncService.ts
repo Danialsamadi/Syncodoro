@@ -1,6 +1,5 @@
 import { supabase } from './supabase'
 import { dbHelpers } from './dbHelpers'
-import { PomodoroSession, Tag } from './database'
 
 export class SyncService {
   private isOnline = navigator.onLine
@@ -35,7 +34,8 @@ export class SyncService {
       // Sync settings
       await this.syncSettings(userId)
       
-      console.log('Data sync completed successfully')
+      console.log('✅ Data sync completed successfully')
+      console.log(`📊 Synced sessions, tags, and settings for user: ${userId}`)
     } catch (error) {
       console.error('Sync failed:', error)
     } finally {
