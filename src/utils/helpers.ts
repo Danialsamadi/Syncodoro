@@ -36,6 +36,47 @@ export function validateUsername(username: string): boolean {
   return usernameRegex.test(username)
 }
 
+export async function checkUsernameAvailability(username: string, currentUserId?: string): Promise<{ available: boolean; error?: string }> {
+  try {
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key'
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    
+    // First validate the username format
+    if (!validateUsername(username)) {
+      return { available: false, error: 'Username must be 3-20 characters and contain only letters, numbers, hyphens, and underscores' }
+    }
+    
+    // Check if username exists (excluding current user if provided)
+    let query = supabase
+      .from('profiles')
+      .select('id, username')
+      .eq('username', username)
+      .limit(1)
+    
+    if (currentUserId) {
+      query = query.neq('id', currentUserId)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) {
+      console.error('Error checking username availability:', error)
+      return { available: false, error: 'Failed to check username availability' }
+    }
+    
+    const isAvailable = !data || data.length === 0
+    return { 
+      available: isAvailable, 
+      error: isAvailable ? undefined : 'Username is already taken' 
+    }
+  } catch (error) {
+    console.error('Error checking username availability:', error)
+    return { available: false, error: 'Failed to check username availability' }
+  }
+}
+
 export function getRelativeTime(date: Date): string {
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)

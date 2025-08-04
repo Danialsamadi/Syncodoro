@@ -167,6 +167,7 @@ export class SyncService {
             auto_start_breaks: localSettings.autoStartBreaks,
             auto_start_pomodoros: localSettings.autoStartPomodoros,
             sound_enabled: localSettings.soundEnabled,
+            sound_type: localSettings.soundType || 'beep',
             notifications_enabled: localSettings.notificationsEnabled
           })
 
@@ -191,6 +192,7 @@ export class SyncService {
           autoStartBreaks: remoteSettings.auto_start_breaks,
           autoStartPomodoros: remoteSettings.auto_start_pomodoros,
           soundEnabled: remoteSettings.sound_enabled,
+          soundType: remoteSettings.sound_type || 'beep',
           notificationsEnabled: remoteSettings.notifications_enabled
         }, userId)
       }

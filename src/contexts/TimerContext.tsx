@@ -34,6 +34,7 @@ interface TimerContextType {
     autoStartBreaks: boolean
     autoStartPomodoros: boolean
     soundEnabled: boolean
+    soundType: 'beep' | 'chime' | 'bell' | 'notification' | 'success'
     notificationsEnabled: boolean
   }
   updateSettings: (newSettings: Partial<typeof settings>) => void
@@ -76,6 +77,7 @@ export function TimerProvider({ children }: TimerProviderProps) {
     autoStartBreaks: false,
     autoStartPomodoros: false,
     soundEnabled: true,
+    soundType: 'beep',
     notificationsEnabled: true
   })
 
@@ -98,6 +100,7 @@ export function TimerProvider({ children }: TimerProviderProps) {
           autoStartBreaks: userSettings.autoStartBreaks,
           autoStartPomodoros: userSettings.autoStartPomodoros,
           soundEnabled: userSettings.soundEnabled,
+          soundType: userSettings.soundType || 'beep',
           notificationsEnabled: userSettings.notificationsEnabled
         }
         setSettings(newSettings)
@@ -213,8 +216,32 @@ export function TimerProvider({ children }: TimerProviderProps) {
   }, [currentType, sessionCount, settings, currentSessionId, sessionNotes])
 
   const playNotificationSound = () => {
-    // Create a simple beep sound
+    if (!settings.soundEnabled) return
+    
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    
+    switch (settings.soundType) {
+      case 'beep':
+        playBeepSound(audioContext)
+        break
+      case 'chime':
+        playChimeSound(audioContext)
+        break
+      case 'bell':
+        playBellSound(audioContext)
+        break
+      case 'notification':
+        playNotificationTone(audioContext)
+        break
+      case 'success':
+        playSuccessSound(audioContext)
+        break
+      default:
+        playBeepSound(audioContext)
+    }
+  }
+
+  const playBeepSound = (audioContext: AudioContext) => {
     const oscillator = audioContext.createOscillator()
     const gainNode = audioContext.createGain()
     
@@ -229,6 +256,89 @@ export function TimerProvider({ children }: TimerProviderProps) {
     
     oscillator.start(audioContext.currentTime)
     oscillator.stop(audioContext.currentTime + 0.5)
+  }
+
+  const playChimeSound = (audioContext: AudioContext) => {
+    const frequencies = [523.25, 659.25, 783.99] // C5, E5, G5
+    
+    frequencies.forEach((freq, index) => {
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+      
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+      
+      oscillator.frequency.value = freq
+      oscillator.type = 'sine'
+      
+      const startTime = audioContext.currentTime + (index * 0.2)
+      gainNode.gain.setValueAtTime(0.2, startTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.8)
+      
+      oscillator.start(startTime)
+      oscillator.stop(startTime + 0.8)
+    })
+  }
+
+  const playBellSound = (audioContext: AudioContext) => {
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    
+    oscillator.frequency.value = 1000
+    oscillator.type = 'triangle'
+    
+    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5)
+    
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 1.5)
+  }
+
+  const playNotificationTone = (audioContext: AudioContext) => {
+    const frequencies = [440, 554.37] // A4, C#5
+    
+    frequencies.forEach((freq, index) => {
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+      
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+      
+      oscillator.frequency.value = freq
+      oscillator.type = 'square'
+      
+      const startTime = audioContext.currentTime + (index * 0.15)
+      gainNode.gain.setValueAtTime(0.15, startTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3)
+      
+      oscillator.start(startTime)
+      oscillator.stop(startTime + 0.3)
+    })
+  }
+
+  const playSuccessSound = (audioContext: AudioContext) => {
+    const frequencies = [261.63, 329.63, 392.00, 523.25] // C4, E4, G4, C5
+    
+    frequencies.forEach((freq, index) => {
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+      
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+      
+      oscillator.frequency.value = freq
+      oscillator.type = 'sine'
+      
+      const startTime = audioContext.currentTime + (index * 0.1)
+      gainNode.gain.setValueAtTime(0.2, startTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.4)
+      
+      oscillator.start(startTime)
+      oscillator.stop(startTime + 0.4)
+    })
   }
 
   const startTimer = async () => {

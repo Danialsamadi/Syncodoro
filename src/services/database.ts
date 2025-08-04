@@ -25,6 +25,7 @@ export interface UserSettings {
   autoStartBreaks: boolean
   autoStartPomodoros: boolean
   soundEnabled: boolean
+  soundType: 'beep' | 'chime' | 'bell' | 'notification' | 'success'
   notificationsEnabled: boolean
   profilePublic: boolean
   username?: string
@@ -70,6 +71,10 @@ export const defaultSettings: Omit<UserSettings, 'id' | 'createdAt' | 'updatedAt
   autoStartBreaks: false,
   autoStartPomodoros: false,
   soundEnabled: true,
+  soundType: 'beep',
   notificationsEnabled: true,
   profilePublic: false,
+  username: undefined,
+  displayName: undefined,
+  bio: undefined,
 }

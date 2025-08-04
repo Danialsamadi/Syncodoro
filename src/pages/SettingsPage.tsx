@@ -243,6 +243,118 @@ export default function SettingsPage() {
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
+
+          {/* Sound Type Selection */}
+          {localSettings.soundEnabled && (
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div className="flex items-center space-x-3">
+                <Volume2 className="w-5 h-5 text-gray-600" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">Sound Type</h3>
+                  <p className="text-sm text-gray-600">Choose your notification sound</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <select
+                  value={(localSettings as any).soundType || 'beep'}
+                  onChange={(e) => handleSettingChange('soundType', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="beep">Beep</option>
+                  <option value="chime">Chime</option>
+                  <option value="bell">Bell</option>
+                  <option value="notification">Notification</option>
+                  <option value="success">Success</option>
+                </select>
+                <button
+                  onClick={() => {
+                    // Test the selected sound
+                    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+                    const soundType = (localSettings as any).soundType || 'beep'
+                    
+                    const playTestSound = (type: string) => {
+                      switch (type) {
+                        case 'beep':
+                          const osc = audioContext.createOscillator()
+                          const gain = audioContext.createGain()
+                          osc.connect(gain)
+                          gain.connect(audioContext.destination)
+                          osc.frequency.value = 800
+                          osc.type = 'sine'
+                          gain.gain.setValueAtTime(0.3, audioContext.currentTime)
+                          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
+                          osc.start(audioContext.currentTime)
+                          osc.stop(audioContext.currentTime + 0.5)
+                          break
+                        case 'chime':
+                          [523.25, 659.25, 783.99].forEach((freq, index) => {
+                            const osc = audioContext.createOscillator()
+                            const gain = audioContext.createGain()
+                            osc.connect(gain)
+                            gain.connect(audioContext.destination)
+                            osc.frequency.value = freq
+                            osc.type = 'sine'
+                            const startTime = audioContext.currentTime + (index * 0.2)
+                            gain.gain.setValueAtTime(0.2, startTime)
+                            gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.8)
+                            osc.start(startTime)
+                            osc.stop(startTime + 0.8)
+                          })
+                          break
+                        case 'bell':
+                          const osc2 = audioContext.createOscillator()
+                          const gain2 = audioContext.createGain()
+                          osc2.connect(gain2)
+                          gain2.connect(audioContext.destination)
+                          osc2.frequency.value = 1000
+                          osc2.type = 'triangle'
+                          gain2.gain.setValueAtTime(0.4, audioContext.currentTime)
+                          gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5)
+                          osc2.start(audioContext.currentTime)
+                          osc2.stop(audioContext.currentTime + 1.5)
+                          break
+                        case 'notification':
+                          [440, 554.37].forEach((freq, index) => {
+                            const osc = audioContext.createOscillator()
+                            const gain = audioContext.createGain()
+                            osc.connect(gain)
+                            gain.connect(audioContext.destination)
+                            osc.frequency.value = freq
+                            osc.type = 'square'
+                            const startTime = audioContext.currentTime + (index * 0.15)
+                            gain.gain.setValueAtTime(0.15, startTime)
+                            gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3)
+                            osc.start(startTime)
+                            osc.stop(startTime + 0.3)
+                          })
+                          break
+                        case 'success':
+                          [261.63, 329.63, 392.00, 523.25].forEach((freq, index) => {
+                            const osc = audioContext.createOscillator()
+                            const gain = audioContext.createGain()
+                            osc.connect(gain)
+                            gain.connect(audioContext.destination)
+                            osc.frequency.value = freq
+                            osc.type = 'sine'
+                            const startTime = audioContext.currentTime + (index * 0.1)
+                            gain.gain.setValueAtTime(0.2, startTime)
+                            gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.4)
+                            osc.start(startTime)
+                            osc.stop(startTime + 0.4)
+                          })
+                          break
+                      }
+                    }
+                    
+                    playTestSound(soundType)
+                  }}
+                  className="px-3 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 transition-colors"
+                >
+                  Test
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

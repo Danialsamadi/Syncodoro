@@ -1,9 +1,6 @@
 -- Syncodoro Supabase Database Schema
 -- Run this script in your Supabase SQL Editor to create all required tables
 
--- Enable RLS (Row Level Security)
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
-
 -- Create profiles table (extends auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -127,17 +124,21 @@ BEGIN
   NEW.updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
 
 -- Create triggers for updated_at
+DROP TRIGGER IF EXISTS handle_updated_at_profiles ON public.profiles;
 CREATE TRIGGER handle_updated_at_profiles
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at_sessions ON public.sessions;
 CREATE TRIGGER handle_updated_at_sessions
   BEFORE UPDATE ON public.sessions
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS handle_updated_at_user_settings ON public.user_settings;
 CREATE TRIGGER handle_updated_at_user_settings
   BEFORE UPDATE ON public.user_settings
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -154,9 +155,11 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
 
 -- Trigger to create profile and settings on user signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

@@ -95,6 +95,7 @@ export interface Database {
           auto_start_breaks: boolean
           auto_start_pomodoros: boolean
           sound_enabled: boolean
+          sound_type: string
           notifications_enabled: boolean
           created_at: string
           updated_at: string
@@ -109,6 +110,7 @@ export interface Database {
           auto_start_breaks?: boolean
           auto_start_pomodoros?: boolean
           sound_enabled?: boolean
+          sound_type?: string
           notifications_enabled?: boolean
           created_at?: string
           updated_at?: string
@@ -123,6 +125,7 @@ export interface Database {
           auto_start_breaks?: boolean
           auto_start_pomodoros?: boolean
           sound_enabled?: boolean
+          sound_type?: string
           notifications_enabled?: boolean
           created_at?: string
           updated_at?: string
