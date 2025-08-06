@@ -3,12 +3,24 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key'
 
-// Only warn if environment variables are missing, don't throw error
+// Check if environment variables are properly set
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn('Supabase environment variables not found. Using placeholder values. Some features may not work.')
+  console.error('⚠️ Supabase environment variables not found. Using placeholder values. Authentication and data sync will not work correctly.')
+} else {
+  console.log('✅ Supabase environment variables found:', { 
+    url: supabaseUrl.substring(0, 20) + '...', // Only show part of the URL for security
+    keyLength: supabaseAnonKey.length
+  })
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Create the Supabase client with options for better reliability
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
 // Database types for Supabase
 export interface Database {

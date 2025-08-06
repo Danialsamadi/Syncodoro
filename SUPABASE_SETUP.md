@@ -97,7 +97,60 @@ All devices stay in sync
 ## Security Features
 
 ### Row Level Security (RLS)
+
 - Users can only access their own data
+- All tables have proper RLS policies to ensure data privacy
+- Authentication triggers automatically create user profiles and settings
+
+## Troubleshooting
+
+### Fixing User Settings Sync Issues
+
+If user settings are not being properly saved to Supabase, follow these steps:
+
+1. **Run the SQL scripts in the Supabase SQL Editor**
+   - Run `supabase-table-schema.sql` to ensure the table structure is correct
+   - Run `supabase-triggers.sql` to set up the necessary triggers
+   - Run `supabase-security-fix.sql` to apply security fixes and function definitions
+   - Run `supabase-fix-sound-type.sql` to add the missing `sound_type` column (if you're seeing errors about this column)
+
+2. **Manual Fix for Existing Users**:
+   - If you already have users without settings records, run this SQL:
+
+   ```sql
+   INSERT INTO public.user_settings (
+     user_id, 
+     pomodoro_length, 
+     short_break_length, 
+     long_break_length, 
+     sessions_until_long_break, 
+     auto_start_breaks, 
+     auto_start_pomodoros, 
+     sound_enabled, 
+     sound_type, 
+     notifications_enabled
+   )
+   SELECT 
+     id, 
+     25, 
+     5, 
+     15, 
+     4, 
+     false, 
+     false, 
+     true, 
+     'beep', 
+     true
+   FROM auth.users
+   WHERE id NOT IN (SELECT user_id FROM public.user_settings);
+   ```
+
+3. **Verify Environment Variables**:
+   - Ensure your `.env` file has the correct Supabase URL and anon key
+   - Restart the application after making changes to environment variables
+
+### Privacy Controls
+
 - Public profiles are viewable by everyone when enabled
 - All database operations are secured by user authentication
 
@@ -106,9 +159,9 @@ All devices stay in sync
 - Users control profile visibility
 - No data is shared without explicit permission
 
-## Troubleshooting
+### Additional Troubleshooting
 
-### Common Issues
+#### Common Issues
 
 **1. Sync Not Working**
 - Check internet connection

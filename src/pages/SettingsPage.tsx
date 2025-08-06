@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useTimer } from '../contexts/TimerContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Save, Bell, Volume2, VolumeX } from 'lucide-react'
+import { Save, Bell, Volume2, VolumeX, Download, Smartphone, Wifi, WifiOff, HardDrive } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { usePWAInstall, useOfflineStatus } from '../components/OfflineIndicator'
+import { pwaManager, PWAManager } from '../utils/pwa'
+import { offlineSyncService } from '../services/offlineSync'
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useTimer()
@@ -358,6 +361,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* PWA & Offline Settings */}
+      <PWASettings />
+
       {/* Account Settings */}
       {user && (
         <div className="card">
@@ -395,6 +401,161 @@ export default function SettingsPage() {
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+// PWA Settings Component
+function PWASettings() {
+  const { isInstallable, installPWA } = usePWAInstall()
+  const isOnline = useOfflineStatus()
+  const [cacheInfo, setCacheInfo] = useState<{ size: string; entries: number } | null>(null)
+  const [syncStatus, setSyncStatus] = useState(offlineSyncService.getSyncStatus())
+
+  useEffect(() => {
+    // Load cache info
+    pwaManager.getCacheSize().then(({ size, entries }) => {
+      setCacheInfo({
+        size: PWAManager.formatCacheSize(size),
+        entries
+      })
+    })
+
+    // Subscribe to sync status updates
+    const unsubscribe = offlineSyncService.onSyncStatusChange(() => {
+      setSyncStatus(offlineSyncService.getSyncStatus())
+    })
+
+    return unsubscribe
+  }, [])
+
+  const handleInstallPWA = async () => {
+    const success = await installPWA()
+    if (success) {
+      toast.success('App installed successfully!')
+    }
+  }
+
+  const handleForceSync = async () => {
+    try {
+      await offlineSyncService.forcSync()
+      toast.success('Sync completed!')
+    } catch (error) {
+      toast.error('Sync failed. Check your connection.')
+    }
+  }
+
+  const handleClearCache = async () => {
+    try {
+      await pwaManager.clearOldCaches()
+      toast.success('Cache cleared successfully!')
+      // Reload cache info
+      const { size, entries } = await pwaManager.getCacheSize()
+      setCacheInfo({
+        size: PWAManager.formatCacheSize(size),
+        entries
+      })
+    } catch (error) {
+      toast.error('Failed to clear cache')
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
+        <Smartphone className="w-5 h-5" />
+        <span>App & Offline</span>
+      </h2>
+      
+      <div className="space-y-6">
+        {/* Connection Status */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-3">
+            {isOnline ? (
+              <Wifi className="w-5 h-5 text-green-500" />
+            ) : (
+              <WifiOff className="w-5 h-5 text-orange-500" />
+            )}
+            <div>
+              <p className="font-medium text-gray-900">
+                {isOnline ? 'Online' : 'Offline'}
+              </p>
+              <p className="text-sm text-gray-500">
+                {isOnline ? 'Connected to internet' : 'Working offline'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* PWA Installation */}
+        {isInstallable && (
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Download className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="font-medium text-gray-900">Install App</p>
+                <p className="text-sm text-gray-500">
+                  Install Syncodoro for a better experience
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleInstallPWA}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+            >
+              Install
+            </button>
+          </div>
+        )}
+
+        {/* Sync Status */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium text-gray-900">Data Sync</h3>
+            <button
+              onClick={handleForceSync}
+              disabled={!isOnline || syncStatus.isSyncing}
+              className="px-3 py-1 bg-primary-500 text-white rounded text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {syncStatus.isSyncing ? 'Syncing...' : 'Sync Now'}
+            </button>
+          </div>
+          
+          <div className="text-sm text-gray-600">
+            {syncStatus.queueLength > 0 ? (
+              <p>{syncStatus.queueLength} items pending sync</p>
+            ) : (
+              <p>All data synced</p>
+            )}
+            {syncStatus.lastSync && (
+              <p>Last sync: {new Date(syncStatus.lastSync).toLocaleString()}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Cache Info */}
+        {cacheInfo && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-900 flex items-center space-x-2">
+                <HardDrive className="w-4 h-4" />
+                <span>Offline Storage</span>
+              </h3>
+              <button
+                onClick={handleClearCache}
+                className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+              >
+                Clear Cache
+              </button>
+            </div>
+            
+            <div className="text-sm text-gray-600">
+              <p>{cacheInfo.entries} cached files</p>
+              <p>Using {cacheInfo.size} of storage</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

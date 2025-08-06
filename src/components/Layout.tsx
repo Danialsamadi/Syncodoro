@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
-import SyncIndicator from './SyncIndicator'
+import OfflineIndicator from './OfflineIndicator'
 
 export default function Layout() {
   return (
@@ -9,7 +9,7 @@ export default function Layout() {
       <main className="container mx-auto px-4 py-8">
         <Outlet />
       </main>
-      <SyncIndicator />
+      <OfflineIndicator className="fixed bottom-4 right-4 z-50" />
     </div>
   )
 }

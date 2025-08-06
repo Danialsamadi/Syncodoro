@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useSync } from '../contexts/SyncContext'
 import { dbHelpers } from '../services/dbHelpers'
 import { PomodoroSession } from '../services/database'
 import { formatDuration, getDateRange, groupSessionsByDate } from '../utils/helpers'
-import { Calendar, Clock, Target, TrendingUp, Download } from 'lucide-react'
+import { Calendar, Clock, Target, TrendingUp, Download, RefreshCw } from 'lucide-react'
 import ExportModal from '../components/ExportModal'
 import {
   LineChart,
@@ -22,6 +23,7 @@ import {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { syncNow, isSyncing, syncStatus, lastSyncTime } = useSync()
   const [sessions, setSessions] = useState<PomodoroSession[]>([])
   const [stats, setStats] = useState({
     totalSessions: 0,
@@ -109,6 +111,24 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex flex-col">
+                <button
+                  onClick={() => syncNow()}
+                  disabled={isSyncing}
+                  className={`group relative overflow-hidden ${isSyncing ? 'bg-gray-100' : 'bg-white'} border border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100 flex items-center space-x-2`}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-purple-500' : 'text-gray-500'} transition-transform group-hover:scale-110`} />
+                  <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
+                  {syncStatus === 'success' && <span className="text-green-500 text-xs ml-1">✓</span>}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                </button>
+                {lastSyncTime && (
+                  <span className="text-xs text-gray-500 mt-1 text-center">
+                    Last synced: {lastSyncTime.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              
               <button
                 onClick={() => setShowExportModal(true)}
                 className="group relative overflow-hidden bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100 flex items-center space-x-2"

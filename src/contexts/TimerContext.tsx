@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { dbHelpers } from '../services/dbHelpers'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthContext'
+import { dbHelpers } from '../services/dbHelpers'
+import { UserSettings } from '../services/database'
+import { offlineSyncService } from '../services/offlineSync'
 import toast from 'react-hot-toast'
 
 type TimerType = 'pomodoro' | 'short-break' | 'long-break'

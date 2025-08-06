@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { useEffect } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SyncProvider } from './contexts/SyncContext'
 import { TimerProvider } from './contexts/TimerContext'
@@ -11,12 +12,47 @@ import PublicProfilePage from './pages/PublicProfilePage'
 import SettingsPage from './pages/SettingsPage'
 import LoginPage from './pages/LoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
-import { registerSW } from './utils/sw'
-
-// Register service worker
-registerSW()
+import { pwaManager } from './utils/pwa'
+import { offlineSyncService } from './services/offlineSync'
+import toast from 'react-hot-toast'
 
 function App() {
+  // Initialize PWA functionality
+  useEffect(() => {
+    // Initialize PWA manager
+    pwaManager.initialize().catch(console.error)
+    
+    // Setup offline sync service
+    const unsubscribeSync = offlineSyncService.onSyncStatusChange((status) => {
+      if (status.status === 'completed' && status.successful && status.successful > 0) {
+        toast.success(`Synced ${status.successful} items successfully!`, {
+          icon: '🔄',
+          duration: 3000
+        })
+      } else if (status.status === 'error') {
+        toast.error('Sync failed. Will retry when back online.', {
+          icon: '⚠️',
+          duration: 4000
+        })
+      }
+    })
+    
+    // Setup PWA update notifications
+    const unsubscribePWA = pwaManager.onUpdateAvailable((info) => {
+      if (info.updateAvailable) {
+        toast('App update available!', {
+          icon: '🔄',
+          duration: 6000
+        })
+      }
+    })
+    
+    return () => {
+      unsubscribeSync()
+      unsubscribePWA()
+    }
+  }, [])
+
   return (
     <AuthProvider>
       <SyncProvider>

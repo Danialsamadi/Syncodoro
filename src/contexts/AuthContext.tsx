@@ -51,20 +51,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
 
       if (event === 'SIGNED_IN' && session?.user) {
         // Initialize user settings when signing in
-        await initializeUserSettings(session.user.id)
-        
-        // Start syncing data
-        await syncService.syncData(session.user.id)
-        
-        toast.success('Successfully signed in!')
+        try {
+          console.log('User signed in, initializing settings and syncing data for:', session.user.id)
+          await initializeUserSettings(session.user.id)
+          
+          // Force a data sync to ensure user data is up-to-date
+          console.log('Triggering initial data sync after login')
+          setTimeout(async () => {
+            try {
+              await syncService.syncData(session.user.id)
+              console.log('Initial data sync completed successfully')
+            } catch (syncError) {
+              console.error('Error during initial data sync:', syncError)
+            }
+          }, 1000) // Small delay to ensure auth is fully established
+          
+          toast.success('Successfully signed in!')
+          
+          // Redirect to dashboard if not already there
+          const currentPath = window.location.pathname
+          if (currentPath === '/' || currentPath === '/login') {
+            window.location.href = '/dashboard'
+          }
+        } catch (error) {
+          console.error('Error during sign-in process:', error)
+          toast.error('Error completing sign-in process')
+        }
       } else if (event === 'SIGNED_OUT') {
         toast.success('Successfully signed out!')
+        // Redirect to home page after sign out
+        window.location.href = '/'
       }
     })
 
@@ -73,12 +96,122 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const initializeUserSettings = async (userId: string) => {
     try {
+      console.log('🔄 Initializing user settings for:', userId)
+      
+      // First, check if user settings exist in Supabase
+      const { data: remoteSettings, error: remoteError } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      
+      console.log('Remote settings check:', { 
+        exists: !!remoteSettings, 
+        error: remoteError?.message,
+        errorCode: remoteError?.code 
+      })
+      
       // Check if user settings exist locally
       const existingSettings = await dbHelpers.getSettings(userId)
+      console.log('Local settings check:', { exists: !!existingSettings })
       
-      if (!existingSettings) {
-        // Create default settings for new user
-        await dbHelpers.updateSettings({}, userId)
+      // Case 1: No settings in Supabase, create them from local or defaults
+      if (!remoteSettings || (remoteError && remoteError.code === 'PGRST116')) {
+        console.log('⚠️ No settings in Supabase, creating them')
+        
+        // Create default settings locally if they don't exist
+        if (!existingSettings) {
+          console.log('💾 Creating default local settings')
+          await dbHelpers.updateSettings({
+            pomodoroLength: 25,
+            shortBreakLength: 5,
+            longBreakLength: 15,
+            sessionsUntilLongBreak: 4,
+            autoStartBreaks: false,
+            autoStartPomodoros: false,
+            soundEnabled: true,
+            soundType: 'beep',
+            notificationsEnabled: true
+          }, userId)
+        }
+        
+        // Get the settings after ensuring they exist
+        const settingsToSync = await dbHelpers.getSettings(userId)
+        
+        if (!settingsToSync) {
+          console.error('❌ Failed to retrieve settings after creation')
+          return
+        }
+        
+        // Try to create settings in Supabase with upsert to handle potential race conditions
+        console.log('📤 Uploading settings to Supabase')
+        const { data, error } = await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: userId,
+            pomodoro_length: settingsToSync.pomodoroLength,
+            short_break_length: settingsToSync.shortBreakLength,
+            long_break_length: settingsToSync.longBreakLength,
+            sessions_until_long_break: settingsToSync.sessionsUntilLongBreak,
+            auto_start_breaks: settingsToSync.autoStartBreaks,
+            auto_start_pomodoros: settingsToSync.autoStartPomodoros,
+            sound_enabled: settingsToSync.soundEnabled,
+            sound_type: settingsToSync.soundType || 'beep',
+            notifications_enabled: settingsToSync.notificationsEnabled
+          }, {
+            onConflict: 'user_id'
+          })
+          .select()
+        
+        if (error) {
+          console.error('❌ Failed to create settings in Supabase:', error)
+          
+          // Try direct insert as fallback
+          console.log('🔄 Attempting direct insert as fallback')
+          const { error: insertError } = await supabase
+            .from('user_settings')
+            .insert({
+              user_id: userId,
+              pomodoro_length: settingsToSync.pomodoroLength,
+              short_break_length: settingsToSync.shortBreakLength,
+              long_break_length: settingsToSync.longBreakLength,
+              sessions_until_long_break: settingsToSync.sessionsUntilLongBreak,
+              auto_start_breaks: settingsToSync.autoStartBreaks,
+              auto_start_pomodoros: settingsToSync.autoStartPomodoros,
+              sound_enabled: settingsToSync.soundEnabled,
+              sound_type: settingsToSync.soundType || 'beep',
+              notifications_enabled: settingsToSync.notificationsEnabled
+            })
+          
+          if (insertError) {
+            console.error('❌ Direct insert also failed:', insertError)
+          } else {
+            console.log('✅ Successfully inserted settings via fallback')
+          }
+        } else {
+          console.log('✅ Successfully created settings in Supabase:', data)
+        }
+      } 
+      // Case 2: Settings exist in Supabase but not locally
+      else if (!existingSettings) {
+        console.log('📥 Creating local settings from Supabase data')
+        await dbHelpers.updateSettings({
+          pomodoroLength: remoteSettings.pomodoro_length,
+          shortBreakLength: remoteSettings.short_break_length,
+          longBreakLength: remoteSettings.long_break_length,
+          sessionsUntilLongBreak: remoteSettings.sessions_until_long_break,
+          autoStartBreaks: remoteSettings.auto_start_breaks,
+          autoStartPomodoros: remoteSettings.auto_start_pomodoros,
+          soundEnabled: remoteSettings.sound_enabled,
+          soundType: remoteSettings.sound_type || 'beep',
+          notificationsEnabled: remoteSettings.notifications_enabled
+        }, userId)
+        console.log('✅ Local settings created from remote data')
+      }
+      // Case 3: Both local and remote settings exist - ensure they're in sync
+      else {
+        console.log('🔄 Both local and remote settings exist, syncing...')
+        await syncService.syncData(userId)
       }
 
       // Ensure user profile exists in Supabase
@@ -89,6 +222,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (!profile) {
+        console.log('Creating user profile in Supabase')
         await supabase
           .from('profiles')
           .insert({
@@ -106,7 +240,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}`
         }
       })
       
@@ -125,7 +259,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}`
         }
       })
       
@@ -138,6 +272,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       toast.error('Failed to sign in with GitHub')
     }
   }
+
+
 
   const signOut = async () => {
     try {
