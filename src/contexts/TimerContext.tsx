@@ -90,39 +90,11 @@ export function TimerProvider({ children }: TimerProviderProps) {
     if (user) {
       loadUserSettings()
       
-      // Subscribe to timer state changes from other browsers
-      timerSyncService.subscribeToTimerChanges(user.id, (newState) => {
-        // Only apply changes if we're not the source of the update
-        if (!timerSyncService.isOwnUpdate(newState)) {
-          console.log('Received timer state from another browser:', newState)
-          
-          // Update local state with the remote state
-          setTimeLeft(newState.timeLeft)
-          setIsRunning(newState.isRunning)
-          setIsPaused(newState.isPaused)
-          setCurrentType(newState.currentType)
-          setSessionCount(newState.sessionCount)
-          setCurrentTags(newState.currentTags || [])
-          if (newState.sessionNotes !== undefined) setSessionNotesState(newState.sessionNotes || '')
-          setSessionStartTime(newState.sessionStartTime)
-          setCurrentSessionId(newState.currentSessionId || null)
-          
-          // Show toast notification
-          if (newState.isRunning && !newState.isPaused) {
-            toast.success(`Timer synced from another device: ${newState.currentType}`)
-          }
-        }
-      })
-      
-      // Enable sync after initial setup
-      setTimeout(() => {
-        syncEnabled.current = true
-      }, 1000)
+      // Timer sync is disabled
+      syncEnabled.current = false
       
       return () => {
-        // Unsubscribe when component unmounts or user changes
-        timerSyncService.unsubscribe()
-        syncEnabled.current = false
+        // Nothing to clean up since sync is disabled
       }
     }
   }, [user])
@@ -167,26 +139,10 @@ export function TimerProvider({ children }: TimerProviderProps) {
     }
   }
 
-  // Effect to sync timer state changes
+  // Effect to sync timer state changes - DISABLED
   useEffect(() => {
-    if (user && isOnline && syncEnabled.current) {
-      // Debounce updates to avoid excessive syncing
-      const debounceTimeout = setTimeout(() => {
-        syncTimerState({
-          timeLeft,
-          isRunning,
-          isPaused,
-          currentType,
-          sessionCount,
-          currentTags,
-          sessionNotes,
-          sessionStartTime,
-          currentSessionId
-        })
-      }, 500)
-      
-      return () => clearTimeout(debounceTimeout)
-    }
+    // Timer sync is disabled
+    return () => {}
   }, [timeLeft, isRunning, isPaused, currentType, sessionCount, user, isOnline])
 
   // Timer countdown effect
@@ -212,11 +168,10 @@ export function TimerProvider({ children }: TimerProviderProps) {
     }
   }, [isRunning, isPaused, timeLeft])
 
-  // Helper function to sync timer state to other browsers
+  // Helper function to sync timer state to other browsers - DISABLED
   const syncTimerState = (state: any) => {
-    if (user && isOnline && syncEnabled.current) {
-      timerSyncService.updateTimerState(state)
-    }
+    // Timer sync is disabled
+    return
   }
 
   const handleTimerComplete = useCallback(async () => {

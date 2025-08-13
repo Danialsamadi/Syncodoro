@@ -45,10 +45,6 @@ export default function Navbar() {
             </Link>
             {user ? (
               <>
-                {/* Show username if available */}
-                {profile?.username && (
-                  <span className="text-text-primary font-semibold px-3 py-1 bg-surface-secondary rounded-lg border border-border-primary">@{profile.username}</span>
-                )}
                 {navItems.slice(1).map(({ path, label, icon: Icon }) => (
                   <Link
                     key={path}
@@ -111,10 +107,6 @@ export default function Navbar() {
               
               {user ? (
                 <>
-                  {/* Show username if available */}
-                  {profile?.username && (
-                    <span className="text-text-primary font-semibold px-4 py-2 bg-surface-tertiary rounded-lg border border-border-primary mx-2">@{profile.username}</span>
-                  )}
                   {navItems.slice(1).map(({ path, label, icon: Icon }) => (
                     <Link
                       key={path}

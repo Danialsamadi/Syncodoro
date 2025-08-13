@@ -1,85 +1,144 @@
+/* Import Google Fonts for modern typography */
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-family: Inter, system-ui, -apple-system, sans-serif;
+    font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
   }
   
   body {
-    @apply bg-bg-primary text-text-primary;
+    @apply bg-bg-primary min-h-screen text-text-primary;
   }
   
-  /* Custom scrollbar for black theme */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-title font-bold;
+  }
+  
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-bg-secondary;
+    @apply bg-gray-100;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-border-primary rounded-full;
+    @apply bg-gray-300 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-border-tertiary;
+    @apply bg-gray-400;
   }
 }
 
 @layer components {
+  /* Button Components - Monochrome & Responsive */
   .btn-primary {
-    @apply bg-timer-pomodoro hover:bg-red-600 text-text-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-black-md hover:shadow-black-lg hover:-translate-y-0.5;
+    @apply bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 md:px-6 text-sm md:text-base rounded-md transition-all duration-200 shadow disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto;
   }
   
   .btn-secondary {
-    @apply bg-surface-secondary hover:bg-surface-tertiary text-text-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-black border border-border-primary hover:border-border-tertiary;
+    @apply bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 md:px-6 text-sm md:text-base rounded-md transition-all duration-200 shadow-sm w-full md:w-auto;
   }
   
   .btn-outline {
-    @apply border border-timer-pomodoro text-timer-pomodoro hover:bg-timer-pomodoro hover:text-text-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-glow-red;
+    @apply border border-gray-700 text-gray-700 hover:bg-gray-100 font-medium py-2 px-4 md:px-6 text-sm md:text-base rounded-md transition-all duration-200 w-full md:w-auto;
   }
   
+  .btn-icon {
+    @apply p-2 rounded-md transition-all duration-200 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700;
+  }
+  
+  /* Card Components - Responsive & Monochrome */
   .card {
-    @apply bg-surface-primary rounded-xl shadow-black-md border border-border-primary p-6 hover:shadow-black-lg transition-all duration-300;
+    @apply bg-white rounded-md shadow-sm p-3 md:p-4 border border-gray-200 w-full;
   }
   
+  .card-hover {
+    @apply hover:shadow transition-all duration-200;
+  }
+  
+  /* Input Components - Responsive & Monochrome */
   .input-field {
-    @apply w-full px-4 py-3 bg-surface-secondary border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-timer-pomodoro focus:border-timer-pomodoro text-text-primary placeholder-text-tertiary transition-all duration-200;
+    @apply w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-700 focus:border-gray-700 text-gray-800 placeholder-gray-400 transition-all duration-200 text-sm md:text-base;
   }
   
+  .checkbox {
+    @apply form-checkbox h-4 w-4 text-gray-700 rounded border-gray-300 focus:ring-1 focus:ring-gray-700;
+  }
+  
+  /* Timer Display - Responsive & Monochrome */
   .timer-display {
-    @apply text-timer font-mono font-light text-text-primary tracking-tight;
+    @apply text-4xl md:text-timer font-bold text-gray-900 text-center;
   }
   
   .timer-display-mobile {
-    @apply text-timer-mobile font-mono font-light text-text-primary tracking-tight;
+    @apply text-3xl md:text-timer-mobile font-bold text-gray-900 text-center;
   }
   
+  /* Stat Card - Responsive & Monochrome */
   .stat-card {
-    @apply bg-surface-secondary border border-border-primary rounded-xl p-6 hover:bg-surface-tertiary transition-all duration-300 hover:shadow-black-md;
+    @apply flex justify-between items-center p-3 rounded-md w-full;
   }
   
+  .stat-card-primary {
+    @apply bg-gray-100;
+  }
+  
+  .stat-card-secondary {
+    @apply bg-gray-50;
+  }
+  
+  .stat-number {
+    @apply text-xl md:text-2xl font-bold text-gray-900;
+  }
+  
+  .stat-label {
+    @apply text-gray-600 text-xs md:text-sm;
+  }
+  
+  /* Navigation Components - Responsive & Monochrome */
   .nav-item {
-    @apply text-text-secondary hover:text-text-primary transition-colors duration-200 font-medium;
+    @apply text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium text-sm md:text-base flex items-center space-x-1 md:space-x-2;
   }
   
   .nav-item-active {
-    @apply text-text-primary font-semibold;
+    @apply text-gray-900 font-semibold;
+  }
+  
+  /* Task Item - Responsive & Monochrome */
+  .task-item {
+    @apply flex items-center p-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors w-full text-sm md:text-base;
+  }
+  
+  /* Toggle Switch - Monochrome */
+  .toggle-switch {
+    @apply relative inline-block w-8 h-4 transition duration-200 ease-in-out rounded-full;
+  }
+  
+  .toggle-switch input {
+    @apply absolute w-8 h-4 transition duration-200 ease-in-out rounded-full appearance-none cursor-pointer bg-gray-300 peer checked:bg-gray-700;
+  }
+  
+  .toggle-switch span {
+    @apply absolute left-0.5 top-0.5 w-3 h-3 transition duration-200 ease-in-out transform rounded-full bg-white peer-checked:translate-x-4;
   }
 }
 
-/* Timer animation */
+/* Timer animation - Simplified */
 @keyframes timer-pulse {
   0%, 100% {
     transform: scale(1);
-    opacity: 1;
   }
   50% {
-    transform: scale(1.05);
-    opacity: 0.8;
+    transform: scale(1.01);
   }
 }
 
@@ -87,7 +146,7 @@
   animation: timer-pulse 2s ease-in-out infinite;
 }
 
-/* Progress ring animation */
+/* Progress ring animation - Simplified */
 @keyframes progress-ring {
   from {
     stroke-dasharray: 0 283;
@@ -96,4 +155,33 @@
 
 .progress-ring-animate {
   animation: progress-ring 1s ease-out forwards;
+}
+
+/* Responsive layout utilities */
+.responsive-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+}
+
+.responsive-grid-dashboard {
+  @apply grid grid-cols-1 md:grid-cols-12 gap-4;
+}
+
+.responsive-sidebar {
+  @apply hidden md:block md:col-span-3 lg:col-span-3;
+}
+
+.responsive-main {
+  @apply col-span-1 md:col-span-9 lg:col-span-9;
+}
+
+.responsive-container {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.responsive-stack {
+  @apply flex flex-col md:flex-row gap-4;
+}
+
+.responsive-reverse-stack {
+  @apply flex flex-col-reverse md:flex-row gap-4;
 }
