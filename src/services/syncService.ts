@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { dbHelpers } from './dbHelpers'
+import { SettingsSyncService } from './settingsSyncService'
 export class SyncService {
   private isOnline = navigator.onLine
   private syncInProgress = false
@@ -276,167 +277,10 @@ export class SyncService {
 
   private async syncSettings(userId: string): Promise<void> {
     try {
-      console.log('🔄 Syncing settings for user:', userId)
-      
-      // First check if settings exist in Supabase
-      const { data: remoteSettings, error: checkError } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', userId)
-        .single()
-      
-      console.log('Remote settings check:', { exists: !!remoteSettings, error: checkError?.message })
-      
-      // Get local settings
-      let localSettings = await dbHelpers.getSettings(userId)
-      console.log('Local settings check:', { exists: !!localSettings })
-      
-      // Case 1: No local settings but remote settings exist
-      if (!localSettings && remoteSettings) {
-        console.log('📥 Creating local settings from remote data')
-        await dbHelpers.updateSettings({
-          pomodoroLength: remoteSettings.pomodoro_length || 25,
-          shortBreakLength: remoteSettings.short_break_length || 5,
-          longBreakLength: remoteSettings.long_break_length || 15,
-          sessionsUntilLongBreak: remoteSettings.sessions_until_long_break || 4,
-          autoStartBreaks: remoteSettings.auto_start_breaks || false,
-          autoStartPomodoros: remoteSettings.auto_start_pomodoros || false,
-          soundEnabled: remoteSettings.sound_enabled || true,
-          soundType: remoteSettings.sound_type || 'beep',
-          notificationsEnabled: remoteSettings.notifications_enabled || true
-        }, userId)
-        console.log('✅ Local settings created from remote data')
-        return
-      }
-      
-      // Case 2: No local settings and no remote settings
-      if (!localSettings) {
-        console.log('⚠️ No settings found locally or remotely. Creating default settings...')
-        // Create default settings locally
-        await dbHelpers.updateSettings({
-          pomodoroLength: 25,
-          shortBreakLength: 5,
-          longBreakLength: 15,
-          sessionsUntilLongBreak: 4,
-          autoStartBreaks: false,
-          autoStartPomodoros: false,
-          soundEnabled: true,
-          soundType: 'beep',
-          notificationsEnabled: true
-        }, userId)
-        
-        // Get the newly created local settings
-        localSettings = await dbHelpers.getSettings(userId)
-        if (!localSettings) {
-          console.error('❌ Failed to create default settings locally')
-          return
-        }
-      }
-      
-      // Case 3: Local settings exist, upload to Supabase
-      console.log('📤 Uploading settings to Supabase for user:', userId)
-      
-      // Create a base settings object
-      const baseSettings = {
-        user_id: userId,
-        pomodoro_length: localSettings.pomodoroLength,
-        short_break_length: localSettings.shortBreakLength,
-        long_break_length: localSettings.longBreakLength,
-        sessions_until_long_break: localSettings.sessionsUntilLongBreak,
-        auto_start_breaks: localSettings.autoStartBreaks,
-        auto_start_pomodoros: localSettings.autoStartPomodoros,
-        sound_enabled: localSettings.soundEnabled,
-        notifications_enabled: localSettings.notificationsEnabled
-      }
-      
-      // Try first without the sound_type field in case it doesn't exist in the database
-      try {
-        console.log('[DEBUG] Upserting settings to Supabase (without sound_type):', baseSettings)
-        const { error, data } = await supabase
-          .from('user_settings')
-          .upsert(baseSettings, {
-            onConflict: 'user_id'
-          })
-          .select()
-        console.log('[DEBUG] Upsert response (without sound_type):', { error, data })
-        if (!error) {
-          console.log('✅ Settings synced to Supabase successfully (without sound_type)')
-          return
-        }
-        // If that failed, try with the sound_type field included
-        console.log('Trying with sound_type field included...')
-        const settingsWithSound = {
-          ...baseSettings,
-          sound_type: localSettings.soundType || 'beep'
-        }
-        console.log('[DEBUG] Upserting settings to Supabase (with sound_type):', settingsWithSound)
-        const { error: errorWithSound, data: dataWithSound } = await supabase
-          .from('user_settings')
-          .upsert(settingsWithSound, {
-            onConflict: 'user_id'
-          })
-          .select()
-        console.log('[DEBUG] Upsert response (with sound_type):', { error: errorWithSound, data: dataWithSound })
-        if (!errorWithSound) {
-          console.log('✅ Settings synced to Supabase successfully (with sound_type)')
-          return
-        }
-        console.error('❌ Failed to sync settings to Supabase:', errorWithSound)
-        // Try an insert if upsert failed (might be a permission issue)
-        console.log('🔄 Attempting direct insert as fallback...')
-        // Try insert without sound_type first
-        console.log('[DEBUG] Inserting settings to Supabase (without sound_type):', baseSettings)
-        const { error: insertError, data: insertData } = await supabase
-          .from('user_settings')
-          .insert(baseSettings)
-        console.log('[DEBUG] Insert response (without sound_type):', { error: insertError, data: insertData })
-        if (!insertError) {
-          console.log('✅ Settings inserted to Supabase successfully (without sound_type)')
-          return
-        }
-        // Try insert with sound_type
-        console.log('[DEBUG] Inserting settings to Supabase (with sound_type):', settingsWithSound)
-        const { error: insertErrorWithSound, data: insertDataWithSound } = await supabase
-          .from('user_settings')
-          .insert(settingsWithSound)
-        console.log('[DEBUG] Insert response (with sound_type):', { error: insertErrorWithSound, data: insertDataWithSound })
-        if (insertErrorWithSound) {
-          console.error('❌ Direct insert with sound_type also failed:', insertErrorWithSound)
-        }
-        if (insertError) {
-          console.error('❌ Direct insert also failed:', insertError)
-        } else {
-          console.log('✅ Successfully inserted settings via fallback method')
-        }
-      } catch (error) {
-        console.error('❌ Error during settings sync:', error)
-      }
-
-      // Case 4: After upload, download latest remote settings to ensure consistency
-      const { data: latestRemoteSettings, error: fetchError } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', userId)
-        .single()
-      
-      if (!fetchError && latestRemoteSettings) {
-        console.log('📥 Updating local settings with latest remote data')
-        await dbHelpers.updateSettings({
-          pomodoroLength: latestRemoteSettings.pomodoro_length,
-          shortBreakLength: latestRemoteSettings.short_break_length,
-          longBreakLength: latestRemoteSettings.long_break_length,
-          sessionsUntilLongBreak: latestRemoteSettings.sessions_until_long_break,
-          autoStartBreaks: latestRemoteSettings.auto_start_breaks,
-          autoStartPomodoros: latestRemoteSettings.auto_start_pomodoros,
-          soundEnabled: latestRemoteSettings.sound_enabled,
-          soundType: latestRemoteSettings.sound_type || 'beep',
-          notificationsEnabled: latestRemoteSettings.notifications_enabled
-        }, userId)
-      } else if (fetchError) {
-        console.error('❌ Failed to fetch latest remote settings:', fetchError)
-      }
+      await SettingsSyncService.syncUserSettings(userId)
     } catch (error) {
-      console.error('❌ Failed to sync settings:', error)
+      console.error('❌ Settings sync failed:', error)
+      throw error
     }
   }
 

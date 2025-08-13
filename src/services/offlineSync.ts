@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { PomodoroSession, UserSettings } from './database'
+import { sanitizeSoundType } from '../utils/soundValidation'
 
 export interface SyncQueueItem {
   id: string
@@ -234,7 +235,7 @@ export class OfflineSyncService {
         auto_start_breaks: settings.autoStartBreaks,
         auto_start_pomodoros: settings.autoStartPomodoros,
         sound_enabled: settings.soundEnabled,
-        sound_type: settings.soundType,
+        sound_type: sanitizeSoundType(settings.soundType),
         notifications_enabled: settings.notificationsEnabled,
         username: settings.username,
         display_name: settings.displayName,
