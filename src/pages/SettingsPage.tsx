@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTimer } from '../contexts/TimerContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Save, Bell, Volume2, VolumeX, Download, Smartphone, Wifi, WifiOff, HardDrive } from 'lucide-react'
+import { Save, Bell, Volume2, VolumeX, Download, Smartphone, Wifi, WifiOff, HardDrive, Bug } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { usePWAInstall, useOfflineStatus } from '../components/OfflineIndicator'
 import { pwaManager, PWAManager } from '../utils/pwa'
 import { offlineSyncService } from '../services/offlineSync'
+import { SettingsDebugUtils } from '../utils/settingsDebug'
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useTimer()
@@ -30,13 +31,20 @@ export default function SettingsPage() {
   }
 
   const handleSave = async () => {
+    console.log('🔄 Save button clicked!')
+    console.log('🔄 Current user:', user?.id)
+    console.log('🔄 Local settings to save:', localSettings)
+    console.log('🔄 Has changes:', hasChanges)
+    
     try {
+      console.log('🔄 Calling updateSettings...')
       await updateSettings(localSettings)
+      console.log('✅ updateSettings completed successfully')
       toast.success('Settings saved successfully!')
       setHasChanges(false)
     } catch (error) {
+      console.error('❌ Save failed with error:', error)
       toast.error('Failed to save settings')
-      console.error('Failed to save settings:', error)
     }
   }
 
@@ -54,6 +62,41 @@ export default function SettingsPage() {
       } else {
         toast.error('Notification permission denied')
       }
+    }
+  }
+
+  const handleDebugSync = async () => {
+    if (!user) {
+      toast.error('No user logged in')
+      return
+    }
+    
+    try {
+      console.log('🧪 Running debug sync test...')
+      toast.loading('Running debug sync test...', { id: 'debug-sync' })
+      
+      await SettingsDebugUtils.testSettingsSync(user.id)
+      
+      toast.success('Debug sync test completed! Check console for details.', { id: 'debug-sync' })
+    } catch (error) {
+      console.error('Debug sync test failed:', error)
+      toast.error('Debug sync test failed. Check console for details.', { id: 'debug-sync' })
+    }
+  }
+
+  const handleCheckStatus = async () => {
+    if (!user) {
+      toast.error('No user logged in')
+      return
+    }
+    
+    try {
+      console.log('🔍 Checking settings status...')
+      await SettingsDebugUtils.getSettingsStatus(user.id)
+      toast.success('Settings status check completed! Check console for details.')
+    } catch (error) {
+      console.error('Settings status check failed:', error)
+      toast.error('Settings status check failed. Check console for details.')
     }
   }
 
@@ -385,6 +428,37 @@ export default function SettingsPage() {
                 {new Date(user.created_at).toLocaleDateString()}
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Section */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Bug className="w-5 h-5 text-orange-600" />
+              <div>
+                <h3 className="text-sm font-medium text-gray-900">Debug Tools</h3>
+                <p className="text-sm text-gray-600">Development debugging tools</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleCheckStatus}
+              className="btn-secondary flex items-center justify-center space-x-2"
+            >
+              <Bug className="w-4 h-4" />
+              <span>Check Status</span>
+            </button>
+            <button
+              onClick={handleDebugSync}
+              className="btn-secondary flex items-center justify-center space-x-2"
+            >
+              <Bug className="w-4 h-4" />
+              <span>Test Sync</span>
+            </button>
           </div>
         </div>
       )}

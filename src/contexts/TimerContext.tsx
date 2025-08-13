@@ -545,13 +545,20 @@ export function TimerProvider({ children }: TimerProviderProps) {
   }
 
   const updateSettings = async (newSettings: Partial<TimerContextType['settings']>) => {
+    console.log('🔄 updateSettings called with:', newSettings)
+    console.log('🔄 Current user:', user?.id)
+    console.log('🔄 Current settings:', settings)
+    
     const updatedSettings = { ...settings, ...newSettings }
+    console.log('🔄 Updated settings will be:', updatedSettings)
+    
     setSettings(updatedSettings)
     
     // Save to database
     if (user) {
       try {
-        await dbHelpers.updateSettings({
+        console.log('💾 Saving settings to local database for user:', user.id)
+        const settingsToSave = {
           pomodoroLength: updatedSettings.pomodoroLength,
           shortBreakLength: updatedSettings.shortBreakLength,
           longBreakLength: updatedSettings.longBreakLength,
@@ -561,10 +568,28 @@ export function TimerProvider({ children }: TimerProviderProps) {
           soundEnabled: updatedSettings.soundEnabled,
           soundType: updatedSettings.soundType as 'beep' | 'chime' | 'bell' | 'notification' | 'success',
           notificationsEnabled: updatedSettings.notificationsEnabled
-        }, user.id)
+        }
+        console.log('💾 Settings being saved:', settingsToSave)
+        
+        await dbHelpers.updateSettings(settingsToSave, user.id)
+        console.log('✅ Settings saved to local database successfully')
+        
+        // Trigger sync to server
+        console.log('🔄 Triggering sync to server...')
+        try {
+          const { syncService } = await import('../services/syncService')
+          await syncService.syncData(user.id)
+          console.log('✅ Settings synced to server successfully')
+        } catch (syncError) {
+          console.error('❌ Failed to sync settings to server:', syncError)
+        }
+        
       } catch (error) {
-        console.error('Failed to save settings:', error)
+        console.error('❌ Failed to save settings to local database:', error)
+        throw error // Re-throw so the UI can handle it
       }
+    } else {
+      console.warn('⚠️ No user found, settings not saved to database')
     }
     
     // Update timer duration if not running
