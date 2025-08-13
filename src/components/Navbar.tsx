@@ -18,15 +18,15 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-surface-primary shadow-black-md border-b border-border-primary">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-              <Timer className="w-5 h-5 text-white" />
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 bg-timer-pomodoro rounded-xl flex items-center justify-center shadow-glow-red group-hover:shadow-glow-red transition-all duration-300">
+              <Timer className="w-6 h-6 text-text-primary" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Syncodoro</span>
+            <span className="text-2xl font-bold text-text-primary tracking-tight">Syncodoro</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -34,10 +34,10 @@ export default function Navbar() {
             {/* Always show Timer link */}
             <Link
               to="/"
-              className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive('/')
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'nav-item-active bg-surface-tertiary border border-timer-pomodoro shadow-glow-red'
+                  : 'hover:bg-surface-secondary border border-transparent'
               }`}
             >
               <Timer className="w-4 h-4" />
@@ -47,16 +47,16 @@ export default function Navbar() {
               <>
                 {/* Show username if available */}
                 {profile?.username && (
-                  <span className="text-gray-700 font-semibold px-2">@{profile.username}</span>
+                  <span className="text-text-primary font-semibold px-3 py-1 bg-surface-secondary rounded-lg border border-border-primary">@{profile.username}</span>
                 )}
                 {navItems.slice(1).map(({ path, label, icon: Icon }) => (
                   <Link
                     key={path}
                     to={path}
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive(path)
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        ? 'nav-item-active bg-surface-tertiary border border-timer-pomodoro shadow-glow-red'
+                        : 'hover:bg-surface-secondary border border-transparent'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -66,7 +66,7 @@ export default function Navbar() {
                 
                 <button
                   onClick={signOut}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  className="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-secondary border border-transparent hover:border-border-primary transition-all duration-200"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
@@ -85,7 +85,7 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-all duration-200"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -93,16 +93,16 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-border-primary bg-surface-secondary">
             <div className="flex flex-col space-y-2">
               {/* Always show Timer link */}
               <Link
                 to="/"
                 onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`nav-item flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive('/')
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'nav-item-active bg-surface-tertiary border border-timer-pomodoro shadow-glow-red'
+                    : 'hover:bg-surface-tertiary border border-transparent'
                 }`}
               >
                 <Timer className="w-4 h-4" />
@@ -113,17 +113,17 @@ export default function Navbar() {
                 <>
                   {/* Show username if available */}
                   {profile?.username && (
-                    <span className="text-gray-700 font-semibold px-2">@{profile.username}</span>
+                    <span className="text-text-primary font-semibold px-4 py-2 bg-surface-tertiary rounded-lg border border-border-primary mx-2">@{profile.username}</span>
                   )}
                   {navItems.slice(1).map(({ path, label, icon: Icon }) => (
                     <Link
                       key={path}
                       to={path}
                       onClick={() => setIsMenuOpen(false)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`nav-item flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                         isActive(path)
-                          ? 'bg-primary-100 text-primary-700'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                          ? 'nav-item-active bg-surface-tertiary border border-timer-pomodoro shadow-glow-red'
+                          : 'hover:bg-surface-tertiary border border-transparent'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -136,7 +136,7 @@ export default function Navbar() {
                       signOut()
                       setIsMenuOpen(false)
                     }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                    className="nav-item flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium hover:bg-surface-tertiary border border-transparent hover:border-border-primary transition-all duration-200"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign Out</span>
@@ -146,10 +146,9 @@ export default function Navbar() {
                 <Link
                   to="/login"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  className="btn-primary mx-2"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign In</span>
+                  Sign In
                 </Link>
               )}
             </div>

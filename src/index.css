@@ -4,33 +4,70 @@
 
 @layer base {
   html {
-    font-family: system-ui, sans-serif;
+    font-family: Inter, system-ui, -apple-system, sans-serif;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-bg-primary text-text-primary;
+  }
+  
+  /* Custom scrollbar for black theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-bg-secondary;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border-primary rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border-tertiary;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-timer-pomodoro hover:bg-red-600 text-text-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-black-md hover:shadow-black-lg hover:-translate-y-0.5;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-surface-secondary hover:bg-surface-tertiary text-text-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-black border border-border-primary hover:border-border-tertiary;
   }
   
   .btn-outline {
-    @apply border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply border border-timer-pomodoro text-timer-pomodoro hover:bg-timer-pomodoro hover:text-text-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-glow-red;
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply bg-surface-primary rounded-xl shadow-black-md border border-border-primary p-6 hover:shadow-black-lg transition-all duration-300;
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-4 py-3 bg-surface-secondary border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-timer-pomodoro focus:border-timer-pomodoro text-text-primary placeholder-text-tertiary transition-all duration-200;
+  }
+  
+  .timer-display {
+    @apply text-timer font-mono font-light text-text-primary tracking-tight;
+  }
+  
+  .timer-display-mobile {
+    @apply text-timer-mobile font-mono font-light text-text-primary tracking-tight;
+  }
+  
+  .stat-card {
+    @apply bg-surface-secondary border border-border-primary rounded-xl p-6 hover:bg-surface-tertiary transition-all duration-300 hover:shadow-black-md;
+  }
+  
+  .nav-item {
+    @apply text-text-secondary hover:text-text-primary transition-colors duration-200 font-medium;
+  }
+  
+  .nav-item-active {
+    @apply text-text-primary font-semibold;
   }
 }
 
