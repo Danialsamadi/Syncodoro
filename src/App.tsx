@@ -58,7 +58,7 @@ function App() {
       <SyncProvider>
         <TimerProvider>
           <Router>
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-bg-primary">
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/u/:username" element={<PublicProfilePage />} />
@@ -95,8 +95,25 @@ function App() {
                 toastOptions={{
                   duration: 4000,
                   style: {
-                    background: '#363636',
-                    color: '#fff',
+                    background: '#171717',
+                    color: '#f8f8f8',
+                    border: '1px solid #404040',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4)',
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: '#22c55e',
+                      secondary: '#f8f8f8',
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#f8f8f8',
+                    },
                   },
                 }}
               />

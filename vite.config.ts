@@ -9,14 +9,18 @@ export default defineConfig({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'icon.svg'],
         devOptions: {
-          enabled: true
+          enabled: true,
+          type: 'module'
         },
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
         manifest: {
-          name: 'Syncodoro - Pomodoro Productivity Tracker',
-          short_name: 'Syncodoro',
-          description: 'Offline-first Pomodoro timer with productivity analytics and data export',
-          theme_color: '#ef4444',
-          background_color: '#ffffff',
+          name: 'PomoDash - Pomodoro Productivity Tracker',
+          short_name: 'PomoDash',
+          description: 'Modern Pomodoro timer with productivity analytics and task management',
+          theme_color: '#611bf8',
+          background_color: '#f7f7f7',
           display: 'standalone',
           orientation: 'portrait-primary',
           scope: '/',
@@ -28,14 +32,14 @@ export default defineConfig({
               sizes: '1280x720',
               type: 'image/png',
               form_factor: 'wide',
-              label: 'Syncodoro Dashboard'
+              label: 'PomoDash Dashboard'
             },
             {
               src: 'screenshot-narrow.png',
               sizes: '720x1280',
               type: 'image/png',
               form_factor: 'narrow',
-              label: 'Syncodoro Timer'
+              label: 'PomoDash Timer'
             }
           ],
           icons: [
@@ -112,6 +116,13 @@ export default defineConfig({
         '.ngrok.io',
         '.ngrok-free.app',
         '.ngrok.app'
-      ]
+      ],
+      headers: {
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
+        'Access-Control-Allow-Origin': '*',
+        'Service-Worker-Allowed': '/'
+      }
     }
 })

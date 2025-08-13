@@ -6,37 +6,107 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        primary: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
-        },
-        secondary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-        }
+      fontFamily: {
+        'sans': ['Open Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'title': ['Lato', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'body': ['Open Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'mono': ['JetBrains Mono', 'Menlo', 'Monaco', 'monospace'],
       },
+      colors: {
+        // Monochromatic palette
+        gray: {
+          50: "#f9f9f9",
+          100: "#f0f0f0",
+          200: "#e4e4e4",
+          300: "#d1d1d1",
+          400: "#a3a3a3",
+          500: "#737373",
+          600: "#525252",
+          700: "#404040",
+          800: "#262626",
+          900: "#171717",
+        },
+        
+        // UI specific colors - minimal
+        'bg-primary': '#ffffff',
+        'bg-secondary': '#f9f9f9',
+        
+        'surface-primary': '#ffffff',
+        'surface-secondary': '#f9f9f9',
+        
+        'text-primary': '#171717',
+        'text-secondary': '#525252',
+        
+        'border-primary': '#e4e4e4',
+        'border-focus': '#404040',
+      },
+      
+      fontSize: {
+        'xs': ["12px", {lineHeight: "1.5"}],
+        'sm': ["14px", {lineHeight: "1.5"}],
+        'base': ["16px", {lineHeight: "1.6"}],
+        'lg': ["18px", {lineHeight: "1.5"}],
+        'xl': ["20px", {lineHeight: "1.4"}],
+        '2xl': ["24px", {lineHeight: "1.3"}],
+        '3xl': ["30px", {lineHeight: "1.2"}],
+        'timer': ['4.5rem', { lineHeight: '1' }],
+        'timer-mobile': ['3rem', { lineHeight: '1' }],
+      },
+      
+      borderRadius: {
+        'none': "0px",
+        'sm': "4px",
+        'DEFAULT': "8px",
+        'md': "12px",
+        'lg': "16px",
+        'full': "9999px"
+      },
+      
+      spacing: {
+        0: "0px",
+        1: "4px",
+        2: "8px",
+        3: "12px",
+        4: "16px",
+        5: "20px",
+        6: "24px",
+        8: "32px",
+        10: "40px",
+        12: "48px",
+        16: "64px",
+        20: "80px",
+        24: "96px",
+        32: "128px",
+        40: "160px",
+        48: "192px",
+        64: "256px",
+        px: "1px",
+      },
+      
+      boxShadow: {
+        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'DEFAULT': '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
+        'focus': '0 0 0 2px rgba(64, 64, 64, 0.2)',
+      },
+      
       animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'bounce-gentle': 'bounce 2s infinite',
-      }
+        'pulse': 'pulse 2s ease-in-out infinite',
+        'timer-pulse': 'timerPulse 2s ease-in-out infinite',
+      },
+      
+      keyframes: {
+        timerPulse: {
+          '0%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'scale(1.02)', opacity: '0.8' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+      },
+      
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/forms')],
 }
