@@ -9,6 +9,12 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  profile: {
+    username?: string | null
+    displayName?: string | null
+    bio?: string | null
+    profilePublic?: boolean
+  } | null
   signInWithGoogle: () => Promise<void>
   signInWithGitHub: () => Promise<void>
   signOut: () => Promise<void>
@@ -38,6 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<AuthContextType['profile']>(null)
 
   useEffect(() => {
     // Get initial session
@@ -45,6 +52,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      if (session?.user) {
+        fetchProfile(session.user.id)
+      }
     })
 
     // Listen for auth changes
@@ -55,6 +65,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      if (session?.user) {
+        fetchProfile(session.user.id)
+      } else {
+        setProfile(null)
+      }
 
       if (event === 'SIGNED_IN' && session?.user) {
         // Initialize user settings when signing in
@@ -235,12 +250,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  // Fetch user profile from Supabase
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      if (error) {
+        console.error('Failed to fetch user profile:', error)
+        setProfile(null)
+      } else {
+        setProfile({
+          username: data.username,
+          displayName: data.display_name,
+          bio: data.bio,
+          profilePublic: data.profile_public
+        })
+      }
+    } catch (err) {
+      setProfile(null)
+    }
+  }
+
   const signInWithGoogle = async () => {
     try {
+      const redirectUrl = import.meta.env.VITE_APP_URL || window.location.origin
+      console.log('🔍 Debug - Redirect URL:', redirectUrl)
+      console.log('🔍 Debug - VITE_APP_URL:', import.meta.env.VITE_APP_URL)
+      console.log('🔍 Debug - window.location.origin:', window.location.origin)
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`
+          redirectTo: redirectUrl
         }
       })
       
@@ -259,7 +303,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}`
+          redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}`
         }
       })
       
@@ -298,7 +342,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!user) {
       throw new Error('No user logged in')
     }
-
     try {
       // Update local settings
       await dbHelpers.updateSettings({
@@ -307,10 +350,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         bio: profile.bio,
         profilePublic: profile.profilePublic
       }, user.id)
-
       // Sync to Supabase
       await syncService.syncProfile(user.id, profile)
-      
+      // Refetch profile after update
+      await fetchProfile(user.id)
       toast.success('Profile updated successfully!')
     } catch (error) {
       console.error('Failed to update profile:', error)
@@ -323,6 +366,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     session,
     loading,
+    profile,
     signInWithGoogle,
     signInWithGitHub,
     signOut,

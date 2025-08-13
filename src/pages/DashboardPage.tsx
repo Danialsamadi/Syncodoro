@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useSync } from '../contexts/SyncContext'
 import { dbHelpers } from '../services/dbHelpers'
 import { PomodoroSession } from '../services/database'
+import { dashboardSyncService } from '../services/dashboardSyncService'
 import { formatDuration, getDateRange, groupSessionsByDate } from '../utils/helpers'
 import { Calendar, Clock, Target, TrendingUp, Download, RefreshCw } from 'lucide-react'
 import ExportModal from '../components/ExportModal'
@@ -35,10 +36,26 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week')
   const [loading, setLoading] = useState(true)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [isCleaningUp, setIsCleaningUp] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
   }, [user, period])
+  
+  // Refresh data when sync status changes to success
+  // Use a ref to prevent multiple refreshes
+  const lastSyncStatusRef = React.useRef(syncStatus);
+  
+  useEffect(() => {
+    // Only refresh if status changed from something else to 'success'
+    if (syncStatus === 'success' && lastSyncStatusRef.current !== 'success' && user) {
+      console.log('Sync completed, refreshing dashboard data')
+      loadDashboardData()
+    }
+    
+    // Update the ref
+    lastSyncStatusRef.current = syncStatus;
+  }, [syncStatus, user])
 
   const loadDashboardData = async () => {
     if (!user) return
@@ -46,18 +63,53 @@ export default function DashboardPage() {
     try {
       setLoading(true)
       
+      // Set a loading timeout to prevent infinite loading state
+      const loadingTimeout = setTimeout(() => {
+        console.warn('Dashboard loading timed out, forcing completion');
+        setLoading(false);
+      }, 10000); // 10 second timeout
+      
       // Get sessions for the selected period
       const { start, end } = getDateRange(period)
       const periodSessions = await dbHelpers.getSessionsByDateRange(start, end, user.id)
       setSessions(periodSessions)
 
-      // Get overall stats
-      const statsData = await dbHelpers.getSessionStats(user.id, 30)
-      setStats(statsData)
+      // First try to get stats from the server for consistent data across browsers
+      const serverStats = await dashboardSyncService.getServerSessionStats(user.id, 30)
+      
+      if (serverStats) {
+        console.log('Using server-side stats for dashboard')
+        setStats(serverStats)
+      } else {
+        // Fall back to local stats if server fetch fails
+        console.log('Falling back to local stats for dashboard')
+        const localStatsData = await dbHelpers.getSessionStats(user.id, 30)
+        setStats(localStatsData)
+      }
+      
+      // Clear the timeout since we completed successfully
+      clearTimeout(loadingTimeout);
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  const cleanupDuplicates = async () => {
+    if (!user || isCleaningUp) return
+    
+    setIsCleaningUp(true)
+    try {
+      console.log('Starting manual duplicate cleanup...')
+      await dbHelpers.cleanupDuplicateSessions(user.id)
+      // Refresh the dashboard after cleanup
+      await loadDashboardData()
+      console.log('Duplicate cleanup completed')
+    } catch (error) {
+      console.error('Error during cleanup:', error)
+    } finally {
+      setIsCleaningUp(false)
     }
   }
 
@@ -112,6 +164,7 @@ export default function DashboardPage() {
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex flex-col">
+                              <div className="flex gap-2">
                 <button
                   onClick={() => syncNow()}
                   disabled={isSyncing}
@@ -122,6 +175,19 @@ export default function DashboardPage() {
                   {syncStatus === 'success' && <span className="text-green-500 text-xs ml-1">✓</span>}
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                 </button>
+                
+                <button
+                  onClick={cleanupDuplicates}
+                  disabled={isCleaningUp}
+                  className={`group relative overflow-hidden ${isCleaningUp ? 'bg-gray-100' : 'bg-white'} border border-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:border-orange-300 hover:shadow-lg hover:shadow-orange-100 flex items-center`}
+                  title="Clean up duplicate sessions"
+                >
+                  <svg className={`w-4 h-4 ${isCleaningUp ? 'animate-spin text-orange-500' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                </button>
+              </div>
                 {lastSyncTime && (
                   <span className="text-xs text-gray-500 mt-1 text-center">
                     Last synced: {lastSyncTime.toLocaleTimeString()}

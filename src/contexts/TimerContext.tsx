@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from './AuthContext'
 import { dbHelpers } from '../services/dbHelpers'
-import { UserSettings } from '../services/database'
-import { offlineSyncService } from '../services/offlineSync'
+import { timerSyncService } from '../services/timerSyncService'
+import { useSync } from './SyncContext'
 import toast from 'react-hot-toast'
 
 type TimerType = 'pomodoro' | 'short-break' | 'long-break'
@@ -39,7 +39,7 @@ interface TimerContextType {
     soundType: 'beep' | 'chime' | 'bell' | 'notification' | 'success'
     notificationsEnabled: boolean
   }
-  updateSettings: (newSettings: Partial<typeof settings>) => void
+  updateSettings: (newSettings: Partial<TimerContextType['settings']>) => void
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined)
@@ -58,6 +58,8 @@ interface TimerProviderProps {
 
 export function TimerProvider({ children }: TimerProviderProps) {
   const { user } = useAuth()
+  const { isOnline } = useSync()
+  const syncEnabled = useRef(false)
   
   // Timer state
   const [timeLeft, setTimeLeft] = useState(25 * 60) // 25 minutes in seconds
@@ -87,6 +89,41 @@ export function TimerProvider({ children }: TimerProviderProps) {
   useEffect(() => {
     if (user) {
       loadUserSettings()
+      
+      // Subscribe to timer state changes from other browsers
+      timerSyncService.subscribeToTimerChanges(user.id, (newState) => {
+        // Only apply changes if we're not the source of the update
+        if (!timerSyncService.isOwnUpdate(newState)) {
+          console.log('Received timer state from another browser:', newState)
+          
+          // Update local state with the remote state
+          setTimeLeft(newState.timeLeft)
+          setIsRunning(newState.isRunning)
+          setIsPaused(newState.isPaused)
+          setCurrentType(newState.currentType)
+          setSessionCount(newState.sessionCount)
+          setCurrentTags(newState.currentTags || [])
+          if (newState.sessionNotes !== undefined) setSessionNotesState(newState.sessionNotes || '')
+          setSessionStartTime(newState.sessionStartTime)
+          setCurrentSessionId(newState.currentSessionId || null)
+          
+          // Show toast notification
+          if (newState.isRunning && !newState.isPaused) {
+            toast.success(`Timer synced from another device: ${newState.currentType}`)
+          }
+        }
+      })
+      
+      // Enable sync after initial setup
+      setTimeout(() => {
+        syncEnabled.current = true
+      }, 1000)
+      
+      return () => {
+        // Unsubscribe when component unmounts or user changes
+        timerSyncService.unsubscribe()
+        syncEnabled.current = false
+      }
     }
   }, [user])
 
@@ -130,6 +167,28 @@ export function TimerProvider({ children }: TimerProviderProps) {
     }
   }
 
+  // Effect to sync timer state changes
+  useEffect(() => {
+    if (user && isOnline && syncEnabled.current) {
+      // Debounce updates to avoid excessive syncing
+      const debounceTimeout = setTimeout(() => {
+        syncTimerState({
+          timeLeft,
+          isRunning,
+          isPaused,
+          currentType,
+          sessionCount,
+          currentTags,
+          sessionNotes,
+          sessionStartTime,
+          currentSessionId
+        })
+      }, 500)
+      
+      return () => clearTimeout(debounceTimeout)
+    }
+  }, [timeLeft, isRunning, isPaused, currentType, sessionCount, user, isOnline])
+
   // Timer countdown effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -152,6 +211,13 @@ export function TimerProvider({ children }: TimerProviderProps) {
       }
     }
   }, [isRunning, isPaused, timeLeft])
+
+  // Helper function to sync timer state to other browsers
+  const syncTimerState = (state: any) => {
+    if (user && isOnline && syncEnabled.current) {
+      timerSyncService.updateTimerState(state)
+    }
+  }
 
   const handleTimerComplete = useCallback(async () => {
     setIsRunning(false)
@@ -215,7 +281,24 @@ export function TimerProvider({ children }: TimerProviderProps) {
     setSessionNotesState('')
     setSessionStartTime(null)
     setCurrentSessionId(null)
-  }, [currentType, sessionCount, settings, currentSessionId, sessionNotes])
+    
+    // Sync timer state to other browsers
+    syncTimerState({
+      timeLeft: getTimerDuration(currentType === 'pomodoro' ? 
+        (sessionCount % settings.sessionsUntilLongBreak === 0 ? 'long-break' : 'short-break') : 
+        'pomodoro') * 60,
+      isRunning: false,
+      isPaused: false,
+      currentType: currentType === 'pomodoro' ? 
+        (sessionCount % settings.sessionsUntilLongBreak === 0 ? 'long-break' : 'short-break') : 
+        'pomodoro',
+      sessionCount: currentType === 'pomodoro' ? sessionCount + 1 : sessionCount,
+      currentTags: [],
+      sessionNotes: '',
+      sessionStartTime: null,
+      currentSessionId: null
+    })
+  }, [currentType, sessionCount, settings, currentSessionId, sessionNotes, user, isOnline])
 
   const playNotificationSound = () => {
     if (!settings.soundEnabled) return
@@ -357,7 +440,8 @@ export function TimerProvider({ children }: TimerProviderProps) {
           type: currentType,
           tags: currentTags,
           completed: false,
-          notes: sessionNotes
+          notes: sessionNotes,
+          synced: false // Always include required field
         })
         setCurrentSessionId(sessionId)
       } catch (error) {
@@ -367,10 +451,36 @@ export function TimerProvider({ children }: TimerProviderProps) {
     
     setIsRunning(true)
     setIsPaused(false)
+    
+    // Sync timer state to other browsers
+    syncTimerState({
+      timeLeft,
+      isRunning: true,
+      isPaused: false,
+      currentType,
+      sessionCount,
+      currentTags,
+      sessionNotes,
+      sessionStartTime,
+      currentSessionId
+    })
   }
 
   const pauseTimer = () => {
     setIsPaused(true)
+    
+    // Sync timer state to other browsers
+    syncTimerState({
+      timeLeft,
+      isRunning,
+      isPaused: true,
+      currentType,
+      sessionCount,
+      currentTags,
+      sessionNotes,
+      sessionStartTime,
+      currentSessionId
+    })
   }
 
   const resetTimer = async () => {
@@ -390,6 +500,19 @@ export function TimerProvider({ children }: TimerProviderProps) {
     setCurrentTags([])
     setSessionNotesState('')
     setSessionStartTime(null)
+    
+    // Sync timer state to other browsers
+    syncTimerState({
+      timeLeft: getTimerDuration(currentType) * 60,
+      isRunning: false,
+      isPaused: false,
+      currentType,
+      sessionCount,
+      currentTags: [],
+      sessionNotes: '',
+      sessionStartTime: null,
+      currentSessionId: null
+    })
   }
 
   const skipTimer = async () => {
@@ -403,6 +526,8 @@ export function TimerProvider({ children }: TimerProviderProps) {
     }
     
     handleTimerComplete()
+    
+    // Sync will happen in handleTimerComplete
   }
 
   const addTag = (tag: string) => {
@@ -419,7 +544,7 @@ export function TimerProvider({ children }: TimerProviderProps) {
     setSessionNotesState(notes)
   }
 
-  const updateSettings = async (newSettings: Partial<typeof settings>) => {
+  const updateSettings = async (newSettings: Partial<TimerContextType['settings']>) => {
     const updatedSettings = { ...settings, ...newSettings }
     setSettings(updatedSettings)
     
@@ -434,6 +559,7 @@ export function TimerProvider({ children }: TimerProviderProps) {
           autoStartBreaks: updatedSettings.autoStartBreaks,
           autoStartPomodoros: updatedSettings.autoStartPomodoros,
           soundEnabled: updatedSettings.soundEnabled,
+          soundType: updatedSettings.soundType as 'beep' | 'chime' | 'bell' | 'notification' | 'success',
           notificationsEnabled: updatedSettings.notificationsEnabled
         }, user.id)
       } catch (error) {

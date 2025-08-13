@@ -16,6 +16,30 @@ export class SyncService {
     })
   }
 
+  // Event emitter for sync completion
+  private syncCompletedListeners: Array<() => void> = []
+
+  // Add listener for sync completion
+  public onSyncCompleted(callback: () => void): void {
+    this.syncCompletedListeners.push(callback)
+  }
+
+  // Remove listener
+  public removeSyncCompletedListener(callback: () => void): void {
+    this.syncCompletedListeners = this.syncCompletedListeners.filter(cb => cb !== callback)
+  }
+
+  // Notify all listeners when sync is completed
+  private notifySyncCompleted(): void {
+    this.syncCompletedListeners.forEach(callback => {
+      try {
+        callback()
+      } catch (error) {
+        console.error('Error in sync completed callback:', error)
+      }
+    })
+  }
+
   async syncData(userId?: string): Promise<void> {
     if (!this.isOnline || this.syncInProgress || !userId) {
       console.log('Sync skipped:', { isOnline: this.isOnline, syncInProgress: this.syncInProgress, userId })
@@ -60,6 +84,13 @@ export class SyncService {
       
       console.log('✅ Data sync completed successfully')
       console.log(`📊 Synced sessions, tags, and settings for user: ${userId}`)
+      
+      // Clean up any duplicate sessions that might have been created
+      console.log('🧼 Cleaning up duplicate sessions...')
+      await dbHelpers.cleanupDuplicateSessions(userId)
+      
+      // Notify listeners that sync is completed
+      this.notifySyncCompleted()
     } catch (error) {
       console.error('Sync failed:', error)
     } finally {
@@ -68,9 +99,10 @@ export class SyncService {
   }
 
   private async syncSessions(userId: string): Promise<void> {
-    // Upload unsynced local sessions
-    const unsyncedSessions = await dbHelpers.getUnsyncedSessions(userId)
-    console.log(`Found ${unsyncedSessions.length} unsynced sessions to upload`)
+    try {
+      // Upload unsynced local sessions
+      const unsyncedSessions = await dbHelpers.getUnsyncedSessions(userId)
+      console.log(`Found ${unsyncedSessions.length} unsynced sessions to upload`)
     
     for (const session of unsyncedSessions) {
       try {
@@ -111,32 +143,75 @@ export class SyncService {
 
     // Download new sessions from server
     try {
-      const lastSyncedSession = await dbHelpers.getRecentSessions(1, userId)
-      const lastSyncTime = lastSyncedSession[0]?.updatedAt || new Date(0)
+      console.log('🔄 Checking for new sessions from server...')
+      
+      // Get all existing local sessions to avoid duplicates
+      const existingSessions = await dbHelpers.getSessionsByDateRange(
+        new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), // Last year
+        new Date(),
+        userId
+      )
+      
+      // Create a set of existing session IDs (using start_time + duration as unique identifier)
+      const existingSessionKeys = new Set(
+        existingSessions.map(s => `${s.startTime.toISOString()}_${s.duration}_${s.type}`)
+      )
+      
+      console.log(`Found ${existingSessions.length} existing local sessions`)
 
       const { data: remoteSessions, error } = await supabase
         .from('sessions')
         .select('*')
         .eq('user_id', userId)
-        .gt('updated_at', lastSyncTime.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(100) // Limit to recent sessions to avoid downloading everything
 
       if (!error && remoteSessions) {
+        console.log(`Found ${remoteSessions.length} sessions on server`)
+        
+        let newSessionsCount = 0
         for (const remoteSession of remoteSessions) {
-          await dbHelpers.addSession({
-            userId,
-            startTime: new Date(remoteSession.start_time),
-            endTime: remoteSession.end_time ? new Date(remoteSession.end_time) : undefined,
-            duration: remoteSession.duration,
-            type: remoteSession.type,
-            tags: remoteSession.tags,
-            completed: remoteSession.completed,
-            notes: remoteSession.notes || undefined,
-            synced: true
-          })
+          // Create unique key for this remote session
+          const sessionKey = `${remoteSession.start_time}_${remoteSession.duration}_${remoteSession.type}`
+          
+          // Only add if we don't already have this session locally
+          if (!existingSessionKeys.has(sessionKey)) {
+            console.log('📥 Adding new session from server:', {
+              startTime: remoteSession.start_time,
+              type: remoteSession.type,
+              duration: remoteSession.duration
+            })
+            
+            await dbHelpers.addSession({
+              userId,
+              startTime: new Date(remoteSession.start_time),
+              endTime: remoteSession.end_time ? new Date(remoteSession.end_time) : undefined,
+              duration: remoteSession.duration,
+              type: remoteSession.type,
+              tags: remoteSession.tags || [],
+              completed: remoteSession.completed,
+              notes: remoteSession.notes || undefined,
+              synced: true
+            })
+            newSessionsCount++
+          } else {
+            console.log('⏭️ Skipping duplicate session:', sessionKey)
+          }
         }
+        
+        console.log(`✅ Added ${newSessionsCount} new sessions from server`)
       }
     } catch (error) {
-      console.error('Failed to download sessions:', error)
+      console.error('❌ Failed to download sessions:', error)
+    }
+    } catch (error) {
+      console.error('❌ Error during session sync:', error)
+      
+      // If there's a DataError, try to clean up corrupted data
+      if (error instanceof Error && error.name === 'DataError') {
+        console.log('🧹 DataError detected, attempting to clean up corrupted data...')
+        await dbHelpers.cleanupCorruptedData(userId)
+      }
     }
   }
 
@@ -276,61 +351,58 @@ export class SyncService {
       
       // Try first without the sound_type field in case it doesn't exist in the database
       try {
-        const { error } = await supabase
+        console.log('[DEBUG] Upserting settings to Supabase (without sound_type):', baseSettings)
+        const { error, data } = await supabase
           .from('user_settings')
           .upsert(baseSettings, {
             onConflict: 'user_id'
           })
           .select()
-        
+        console.log('[DEBUG] Upsert response (without sound_type):', { error, data })
         if (!error) {
           console.log('✅ Settings synced to Supabase successfully (without sound_type)')
           return
         }
-        
         // If that failed, try with the sound_type field included
         console.log('Trying with sound_type field included...')
         const settingsWithSound = {
           ...baseSettings,
           sound_type: localSettings.soundType || 'beep'
         }
-        
-        const { error: errorWithSound } = await supabase
+        console.log('[DEBUG] Upserting settings to Supabase (with sound_type):', settingsWithSound)
+        const { error: errorWithSound, data: dataWithSound } = await supabase
           .from('user_settings')
           .upsert(settingsWithSound, {
             onConflict: 'user_id'
           })
           .select()
-          
+        console.log('[DEBUG] Upsert response (with sound_type):', { error: errorWithSound, data: dataWithSound })
         if (!errorWithSound) {
           console.log('✅ Settings synced to Supabase successfully (with sound_type)')
           return
         }
-        
         console.error('❌ Failed to sync settings to Supabase:', errorWithSound)
-        
         // Try an insert if upsert failed (might be a permission issue)
         console.log('🔄 Attempting direct insert as fallback...')
-        
         // Try insert without sound_type first
-        const { error: insertError } = await supabase
+        console.log('[DEBUG] Inserting settings to Supabase (without sound_type):', baseSettings)
+        const { error: insertError, data: insertData } = await supabase
           .from('user_settings')
           .insert(baseSettings)
-          
+        console.log('[DEBUG] Insert response (without sound_type):', { error: insertError, data: insertData })
         if (!insertError) {
           console.log('✅ Settings inserted to Supabase successfully (without sound_type)')
           return
         }
-        
         // Try insert with sound_type
-        const { error: insertErrorWithSound } = await supabase
+        console.log('[DEBUG] Inserting settings to Supabase (with sound_type):', settingsWithSound)
+        const { error: insertErrorWithSound, data: insertDataWithSound } = await supabase
           .from('user_settings')
           .insert(settingsWithSound)
-          
+        console.log('[DEBUG] Insert response (with sound_type):', { error: insertErrorWithSound, data: insertDataWithSound })
         if (insertErrorWithSound) {
           console.error('❌ Direct insert with sound_type also failed:', insertErrorWithSound)
         }
-        
         if (insertError) {
           console.error('❌ Direct insert also failed:', insertError)
         } else {

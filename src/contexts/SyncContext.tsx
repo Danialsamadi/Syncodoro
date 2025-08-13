@@ -30,6 +30,24 @@ export function SyncProvider({ children }: SyncProviderProps) {
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle')
+  
+  // Set up sync completed listener
+  useEffect(() => {
+    const handleSyncCompleted = () => {
+      console.log('Sync completed event received')
+      // Update last sync time
+      setLastSyncTime(new Date())
+      // Don't set syncStatus here - it's already handled in syncNow
+    }
+    
+    // Add listener
+    syncService.onSyncCompleted(handleSyncCompleted)
+    
+    // Clean up
+    return () => {
+      syncService.removeSyncCompletedListener(handleSyncCompleted)
+    }
+  }, [])
 
   useEffect(() => {
     const handleOnline = () => {

@@ -4,7 +4,7 @@ import { Timer, BarChart3, User, Settings, LogOut, Menu } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Navbar() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, profile } = useAuth()
   const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -43,9 +43,12 @@ export default function Navbar() {
               <Timer className="w-4 h-4" />
               <span>Timer</span>
             </Link>
-            
             {user ? (
               <>
+                {/* Show username if available */}
+                {profile?.username && (
+                  <span className="text-gray-700 font-semibold px-2">@{profile.username}</span>
+                )}
                 {navItems.slice(1).map(({ path, label, icon: Icon }) => (
                   <Link
                     key={path}
@@ -108,6 +111,10 @@ export default function Navbar() {
               
               {user ? (
                 <>
+                  {/* Show username if available */}
+                  {profile?.username && (
+                    <span className="text-gray-700 font-semibold px-2">@{profile.username}</span>
+                  )}
                   {navItems.slice(1).map(({ path, label, icon: Icon }) => (
                     <Link
                       key={path}

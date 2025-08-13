@@ -13,5 +13,14 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Debug tools for development -->
+    <script>
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const script = document.createElement('script');
+        script.src = '/debug-tools.js';
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    </script>
   </body>
 </html>
