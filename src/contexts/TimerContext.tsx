@@ -578,7 +578,7 @@ export function TimerProvider({ children }: TimerProviderProps) {
         console.log('🔄 Triggering sync to server...')
         try {
           const { syncService } = await import('../services/syncService')
-          await syncService.syncAll(user.id)
+          await syncService.syncData(user.id)
           console.log('✅ Settings synced to server successfully')
         } catch (syncError) {
           console.error('❌ Failed to sync settings to server:', syncError)
