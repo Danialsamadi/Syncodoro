@@ -1,6 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="bg-bg-primary">
   <head>
+    <style>
+      html, body { 
+        background-color: #ffffff; 
+        transition: background-color 0.2s ease;
+      }
+      html.dark, html.dark body { 
+        background-color: #171717; 
+      }
+    </style>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,18 +18,24 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <title>PomoDash - Pomodoro Productivity Tracker</title>
+    <!-- Prevent flash of unstyled content -->
+    <script>
+      // Immediately restore theme preference to prevent flash
+      (function() {
+        // Check for saved theme mode
+        const savedMode = localStorage.getItem('themeMode') || 'system';
+        
+        // Apply dark mode if explicitly set to dark or if system prefers dark
+        if (savedMode === 'dark' || 
+           (savedMode === 'system' && 
+            window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Debug tools for development -->
-    <script>
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        const script = document.createElement('script');
-        script.src = '/debug-tools.js';
-        script.defer = true;
-        document.head.appendChild(script);
-      }
-    </script>
   </body>
 </html>

@@ -300,7 +300,7 @@ export const cssVariables = {
   '--color-secondary-100': colors.secondary[100],
   
   // Dark theme surfaces
-  '--surface-background': surfaces.dark.background.primary,
+  '--bg-primary': surfaces.dark.background.primary,
   '--surface-level-1': surfaces.dark.surface.level1,
   '--surface-level-2': surfaces.dark.surface.level2,
   '--surface-level-3': surfaces.dark.surface.level3,

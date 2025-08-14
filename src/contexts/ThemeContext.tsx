@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { lightTheme } from '../design-system/lightTheme';
 import { darkTheme } from '../design-system/darkTheme';
+import { colors } from '../design-system/colors';
 
 type ThemeMode = 'light' | 'dark' | 'system';
 type Theme = typeof lightTheme;
@@ -21,16 +22,32 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (savedMode as ThemeMode) || 'system';
   };
 
+  // Determine initial dark mode state
+  const getInitialIsDark = (): boolean => {
+    const mode = getInitialThemeMode();
+    if (mode === 'dark') return true;
+    if (mode === 'light') return false;
+    // System preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+
+  const initialIsDark = getInitialIsDark();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialThemeMode);
-  const [isDark, setIsDark] = useState<boolean>(false);
-  const [theme, setTheme] = useState<Theme>(lightTheme);
+  const [isDark, setIsDark] = useState<boolean>(initialIsDark);
+  const [theme, setTheme] = useState<Theme>(initialIsDark ? darkTheme : lightTheme);
 
   // Apply theme based on mode
   useEffect(() => {
     const applyTheme = (dark: boolean) => {
       setIsDark(dark);
       setTheme(dark ? darkTheme : lightTheme);
-      document.documentElement.classList.toggle('dark', dark);
+      
+      // Toggle dark class on html element for Tailwind dark mode
+      if (dark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     };
 
     // Save theme mode to localStorage
@@ -56,18 +73,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     // Get all CSS variables from the theme
     const cssVars = Object.entries({
-      // Primary palette
-      '--color-primary-950': theme.colors.primary?.[950] || darkTheme.colors.primary[950],
-      '--color-primary-900': theme.colors.primary?.[900] || darkTheme.colors.primary[900],
-      '--color-primary-800': theme.colors.primary?.[800] || darkTheme.colors.primary[800],
-      '--color-primary-700': theme.colors.primary?.[700] || darkTheme.colors.primary[700],
-      '--color-primary-600': theme.colors.primary?.[600] || darkTheme.colors.primary[600],
-      '--color-primary-500': theme.colors.primary?.[500] || darkTheme.colors.primary[500],
-      '--color-primary-400': theme.colors.primary?.[400] || darkTheme.colors.primary[400],
-      '--color-primary-300': theme.colors.primary?.[300] || darkTheme.colors.primary[300],
-      '--color-primary-200': theme.colors.primary?.[200] || darkTheme.colors.primary[200],
-      '--color-primary-100': theme.colors.primary?.[100] || darkTheme.colors.primary[100],
-      '--color-primary-50': theme.colors.primary?.[50] || darkTheme.colors.primary[50],
+      // Primary palette - use imported colors directly since they're not in the theme object
+      '--color-primary-950': colors.primary[950],
+      '--color-primary-900': colors.primary[900],
+      '--color-primary-800': colors.primary[800],
+      '--color-primary-700': colors.primary[700],
+      '--color-primary-600': colors.primary[600],
+      '--color-primary-500': colors.primary[500],
+      '--color-primary-400': colors.primary[400],
+      '--color-primary-300': colors.primary[300],
+      '--color-primary-200': colors.primary[200],
+      '--color-primary-100': colors.primary[100],
+      '--color-primary-50': colors.primary[50],
       
       // Text colors
       '--text-primary': theme.colors.text.primary,
@@ -77,7 +94,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       '--text-inverse': theme.colors.text.inverse,
       
       // Surface colors
-      '--surface-background': theme.colors.background.primary,
+      '--bg-primary': theme.colors.background.primary,
       '--surface-level-1': theme.colors.surface.level1,
       '--surface-level-2': theme.colors.surface.level2,
       '--surface-level-3': theme.colors.surface.level3,
