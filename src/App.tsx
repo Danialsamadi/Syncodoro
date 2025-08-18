@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SyncProvider } from './contexts/SyncContext'
 import { TimerProvider } from './contexts/TimerContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import DashboardPage from './pages/DashboardPage'
@@ -54,12 +55,13 @@ function App() {
   }, [])
 
   return (
-    <AuthProvider>
-      <SyncProvider>
-        <TimerProvider>
-          <Router>
-            <div className="min-h-screen bg-bg-primary">
-              <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <SyncProvider>
+          <TimerProvider>
+            <Router>
+              <div className="min-h-screen bg-bg-primary dark:bg-gray-900">
+                <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/u/:username" element={<PublicProfilePage />} />
                 <Route path="/" element={<Layout />}>
@@ -118,10 +120,11 @@ function App() {
                 }}
               />
             </div>
-          </Router>
-        </TimerProvider>
-      </SyncProvider>
-    </AuthProvider>
+            </Router>
+          </TimerProvider>
+        </SyncProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

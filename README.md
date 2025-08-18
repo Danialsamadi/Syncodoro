@@ -1,36 +1,4 @@
-# Syncodoro - Pomodoro Productivity Tracker
-
-A Progressive Web App (PWA) for tracking Pomodoro sessions with offline-first functionality, analytics, and data export capabilities.
-
-## Features
-
-### Core Timer Features
-- ⏱️ Customizable Pomodoro timer (25/5/15 minute defaults)
-- 🏷️ Session tagging and categorization
-- 🔔 Browser notifications and sound alerts
-- ⏸️ Pause, resume, and skip functionality
-- 📝 Session notes and completion tracking
-
-### Data Storage & Sync
-- 💾 **Offline-first** with IndexedDB storage
-- 🔄 **Full data sync** with Supabase backend
-- 📊 **All data types synced**: sessions, tags, settings, profiles
-- 🌐 **Cross-device sync** - access your data anywhere
-- 🔒 **Secure storage** with Row Level Security (RLS)
-- 💪 **Works offline** - never lose your productivity flow
-
-### Analytics & Export
-- 📊 Productivity analytics and insights
-- 📤 Export data (CSV, ICS calendar, reports)
-- 📈 Session history and streak tracking
-- 🎯 Tag-based productivity analysis
-
-### Social & Sharing
-- 👤 Public shareable profiles
-- 🔗 Custom profile URLs (/u/username)
-- 📱 Progressive Web App (installable)
-- 🎨 Modern, responsive UI with Tailwind CSS
-
+#r
 ## Tech Stack
 
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS

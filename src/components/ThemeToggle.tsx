@@ -29,8 +29,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
       onClick={handleThemeChange}
       className={`flex items-center justify-center gap-2 rounded-lg p-2 transition-all duration-250 ${
         isDark 
-          ? 'bg-surface-level-2 hover:bg-surface-level-3 text-text-primary' 
-          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-900'
+          ? 'bg-gray-800 hover:bg-gray-700 text-white' 
+          : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
       } ${className}`}
       aria-label={`Switch to ${
         themeMode === 'light' 
@@ -80,8 +80,8 @@ export const ThemeToggleCompact: React.FC<{ className?: string }> = ({
       onClick={handleThemeChange}
       className={`p-2 rounded-full transition-all duration-250 ${
         isDark 
-          ? 'bg-surface-level-2 hover:bg-surface-level-3 text-text-primary' 
-          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-900'
+          ? 'bg-gray-800 hover:bg-gray-700 text-white' 
+          : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
       } ${className}`}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
     >

@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -27,18 +28,42 @@ export default {
           900: "#171717",
         },
         
-        // UI specific colors - minimal
-        'bg-primary': '#ffffff',
-        'bg-secondary': '#f9f9f9',
+        // UI specific colors - minimal with dark mode support
+        'bg-primary': {
+          DEFAULT: '#ffffff',
+          dark: '#171717'
+        },
+        'bg-secondary': {
+          DEFAULT: '#f9f9f9',
+          dark: '#262626'
+        },
         
-        'surface-primary': '#ffffff',
-        'surface-secondary': '#f9f9f9',
+        'surface-primary': {
+          DEFAULT: '#ffffff',
+          dark: '#171717'
+        },
+        'surface-secondary': {
+          DEFAULT: '#f9f9f9',
+          dark: '#262626'
+        },
         
-        'text-primary': '#171717',
-        'text-secondary': '#525252',
+        'text-primary': {
+          DEFAULT: '#171717',
+          dark: '#f0f0f0'
+        },
+        'text-secondary': {
+          DEFAULT: '#525252',
+          dark: '#a3a3a3'
+        },
         
-        'border-primary': '#e4e4e4',
-        'border-focus': '#404040',
+        'border-primary': {
+          DEFAULT: '#e4e4e4',
+          dark: '#404040'
+        },
+        'border-focus': {
+          DEFAULT: '#404040',
+          dark: '#d1d1d1'
+        },
       },
       
       fontSize: {

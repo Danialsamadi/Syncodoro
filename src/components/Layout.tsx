@@ -4,9 +4,9 @@ import OfflineIndicator from './OfflineIndicator'
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-bg-primary dark:bg-gray-900">
       <Navbar />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 text-text-primary dark:text-gray-100">
         <Outlet />
       </main>
       <OfflineIndicator className="fixed bottom-4 right-4 z-50" />
