@@ -60,7 +60,7 @@ function App() {
         <SyncProvider>
           <TimerProvider>
             <Router>
-              <div className="min-h-screen bg-bg-primary">
+              <div className="min-h-screen bg-bg-primary dark:bg-gray-900">
                 <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/u/:username" element={<PublicProfilePage />} />

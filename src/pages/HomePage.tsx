@@ -1,5 +1,4 @@
 import Timer from '../components/Timer'
-import TagSelector from '../components/TagSelector'
 import SessionNotes from '../components/SessionNotes'
 import { useAuth } from '../contexts/AuthContext'
 import { Link } from 'react-router-dom'
@@ -20,7 +19,6 @@ export default function HomePage() {
 
       <div className="space-y-8">
         <Timer />
-        <TagSelector />
         <SessionNotes />
         
         {!user && (

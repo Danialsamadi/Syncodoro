@@ -4,7 +4,7 @@ import { darkTheme } from '../design-system/darkTheme';
 import { colors } from '../design-system/colors';
 
 type ThemeMode = 'light' | 'dark' | 'system';
-type Theme = typeof lightTheme;
+type Theme = typeof lightTheme | typeof darkTheme;
 
 interface ThemeContextType {
   theme: Theme;
@@ -136,10 +136,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export const useTheme = (): ThemeContextType => {
+// Export useTheme as a regular function to avoid HMR issues
+export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-};
+}

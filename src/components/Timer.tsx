@@ -87,7 +87,7 @@ export default function Timer() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 p-8 bg-surface-primary rounded-2xl border border-border-primary shadow-black-lg">
+    <div className="flex flex-col items-center space-y-8 p-8 bg-surface-primary dark:bg-gray-800 rounded-2xl border border-border-primary dark:border-gray-700 shadow-black-lg">
       {/* Timer Circle */}
       <div className={`relative ${getGlowClass()} rounded-full transition-all duration-300`}>
         <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 200 200">
@@ -136,7 +136,7 @@ export default function Timer() {
       <div className="flex items-center space-x-6">
         <button
           onClick={resetTimer}
-          className="p-4 rounded-xl bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary border border-border-primary hover:border-border-tertiary transition-all duration-200 shadow-black hover:shadow-black-md hover:-translate-y-0.5"
+          className="p-4 rounded-xl bg-surface-secondary dark:bg-gray-700 hover:bg-surface-tertiary dark:hover:bg-gray-600 text-text-secondary dark:text-gray-300 hover:text-text-primary dark:hover:text-gray-100 border border-border-primary dark:border-gray-600 hover:border-border-tertiary dark:hover:border-gray-500 transition-all duration-200 shadow-black hover:shadow-black-md hover:-translate-y-0.5"
           title="Reset"
         >
           <RotateCcw className="w-6 h-6" />
@@ -161,7 +161,7 @@ export default function Timer() {
 
         <button
           onClick={skipTimer}
-          className="p-4 rounded-xl bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary border border-border-primary hover:border-border-tertiary transition-all duration-200 shadow-black hover:shadow-black-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
+          className="p-4 rounded-xl bg-surface-secondary dark:bg-gray-700 hover:bg-surface-tertiary dark:hover:bg-gray-600 text-text-secondary dark:text-gray-300 hover:text-text-primary dark:hover:text-gray-100 border border-border-primary dark:border-gray-600 hover:border-border-tertiary dark:hover:border-gray-500 transition-all duration-200 shadow-black hover:shadow-black-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
           title="Skip"
           disabled={!isRunning}
         >
@@ -170,7 +170,7 @@ export default function Timer() {
       </div>
 
       {/* Status */}
-      <div className="text-center bg-surface-secondary rounded-xl p-4 border border-border-primary">
+      <div className="text-center bg-surface-secondary dark:bg-gray-800 rounded-xl p-4 border border-border-primary dark:border-gray-700">
         <div className="text-xl font-semibold text-text-primary">
           {isRunning && !isPaused
             ? 'Timer Running'
